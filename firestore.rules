@@ -1,0 +1,61 @@
+rules_version = '2';
+
+// GeekDaily — regras do Firestore.
+// Princípio (PRODUCT_AND_TECH_PLAN.md §16): o cliente NUNCA escreve pontuação
+// oficial, streak, ranking, conquistas ou o desafio do dia. Essas escritas
+// passam pelo Admin SDK no servidor (que ignora estas regras). Aqui apenas
+// travamos o acesso do cliente.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Perfil: dono lê o próprio; escrita só pelo servidor (admin).
+    match /profiles/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Desafio do dia (payload público): leitura permitida a logados; nunca escrito pelo cliente.
+    match /dailyChallenges/{dateKey}/games/{gameId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Rankings agregados: leitura pública para logados; escrita só servidor.
+    match /dailyScores/{dateKey}/users/{uid} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+    match /weeklyScores/{weekKey}/users/{uid} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Resultados oficiais: dono lê os seus; escrita só servidor (idempotente).
+    match /officialResults/{docId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.uid;
+      allow write: if false;
+    }
+
+    // Conquistas do usuário: dono lê; escrita só servidor.
+    match /userAchievements/{uid}/unlocked/{achievementId} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Sessões de partida: dono lê as suas; escrita só servidor.
+    match /gameSessions/{uid}/plays/{sessionId} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Bloqueio padrão para qualquer outro caminho.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
