@@ -61,22 +61,28 @@ export default function LoginPage() {
 
       <p className="text-center text-sm gd-muted">
         Não tem conta?{" "}
-        <Link href="/signup" className="text-[var(--color-primary)] font-semibold">
+        <Link href="/signup" className="text-[var(--color-primary)] font-semibold hover:underline">
           Cadastre-se
         </Link>
       </p>
 
-      <div className="pt-2 text-center">
-        <button
+      <div className="pt-2">
+        <div className="relative my-3 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t gd-border" /></div>
+          <span className="relative bg-[var(--color-bg)] px-3 text-xs gd-muted uppercase tracking-wider font-medium">ou</span>
+        </div>
+        <Button
           type="button"
+          variant="secondary"
+          size="lg"
+          className="w-full border gd-border shadow-sm font-semibold"
           onClick={() => {
             sessionStorage.setItem("guest_mode", "true");
             router.push("/");
           }}
-          className="text-xs gd-muted hover:text-[var(--color-primary)] transition-colors"
         >
-          Continuar como Visitante (sem salvar progresso)
-        </button>
+          Continuar como Visitante
+        </Button>
       </div>
     </div>
   );

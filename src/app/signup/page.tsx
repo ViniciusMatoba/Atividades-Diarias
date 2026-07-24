@@ -82,10 +82,29 @@ export default function SignupPage() {
 
       <p className="text-center text-sm gd-muted">
         Já tem conta?{" "}
-        <Link href="/login" className="text-[var(--color-primary)]">
+        <Link href="/login" className="text-[var(--color-primary)] font-semibold hover:underline">
           Entrar
         </Link>
       </p>
+
+      <div className="pt-2">
+        <div className="relative my-3 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t gd-border" /></div>
+          <span className="relative bg-[var(--color-bg)] px-3 text-xs gd-muted uppercase tracking-wider font-medium">ou</span>
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          className="w-full border gd-border shadow-sm font-semibold"
+          onClick={() => {
+            sessionStorage.setItem("guest_mode", "true");
+            router.push("/");
+          }}
+        >
+          Continuar como Visitante
+        </Button>
+      </div>
     </div>
   );
 }

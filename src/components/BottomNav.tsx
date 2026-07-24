@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Swords, Trophy, User, Sparkles } from "lucide-react";
 
+import { useAuthCtx } from "@/lib/firebase/AuthProvider";
+
 const ITEMS = [
   { href: "/", label: "Início", icon: Home },
   { href: "/journey", label: "Jogos", icon: Swords },
@@ -14,6 +16,13 @@ const ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { user } = useAuthCtx();
+  const isGuest = typeof window !== "undefined" && sessionStorage.getItem("guest_mode") === "true";
+
+  // Esconde o menu inferior em telas de login/cadastro ou antes de o usuário estar logado/visitante
+  if (pathname === "/login" || pathname === "/signup" || (!user && !isGuest)) {
+    return null;
+  }
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t gd-border gd-surface/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-md items-stretch justify-between px-2">
