@@ -1,12 +1,8 @@
-"use server";
-
 /**
- * Server Actions de autenticação/perfil.
+ * Serviço de autenticação/perfil.
  * O registro em si (Firebase Auth) roda no cliente; aqui o SERVIDOR valida o
  * token e cria o perfil no Firestore — nenhuma escrita de perfil parte do browser.
  */
-import { getAdminAuth, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
-import { ensureProfile } from "@/server/repo/firestore";
 import { z } from "zod";
 
 const createProfileSchema = z.object({
@@ -25,14 +21,20 @@ export interface ActionResult {
 
 /** Verifica o ID token e materializa o perfil do usuário autenticado. */
 export async function createProfile(input: unknown): Promise<ActionResult> {
-  if (!isFirebaseAdminConfigured) {
-    // Dev sem credenciais: nada a persistir.
-    return { ok: true };
-  }
+  if (typeof window !== "undefined") return { ok: true };
   const parsed = createProfileSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Dados inválidos." };
 
   try {
+    const adminPath = "@/lib/firebase/admin";
+    const firestorePath = "@/server/repo/firestore";
+    const { getAdminAuth, isFirebaseAdminConfigured } = await import(/* webpackIgnore: true */ adminPath);
+    const { ensureProfile } = await import(/* webpackIgnore: true */ firestorePath);
+
+    if (!isFirebaseAdminConfigured) {
+      return { ok: true };
+    }
+
     const decoded = await getAdminAuth().verifyIdToken(parsed.data.idToken);
     await ensureProfile(decoded.uid, parsed.data.username);
     return { ok: true };

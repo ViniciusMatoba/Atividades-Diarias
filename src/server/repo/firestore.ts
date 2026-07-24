@@ -1,4 +1,3 @@
-import "server-only";
 import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { getWeekKey } from "@/lib/dailyKey";
 import { applyDailyCompletion, type StreakState } from "@/lib/streak";

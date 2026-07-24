@@ -30,18 +30,15 @@ export function generateStaticParams() {
 
 export default async function PlayPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ gameId: string }>;
-  searchParams: Promise<{ mode?: string }>;
 }) {
   const { gameId } = await params;
-  const { mode: modeParam } = await searchParams;
   if (!KNOWN_IDS.includes(gameId as GameId)) notFound();
   const id = gameId as GameId;
   const meta = getGameMeta(id);
   if (!meta) notFound();
-  const mode = modeParam === "infinite" ? "infinite" : "daily";
+  const mode = "daily";
 
   return (
     <div className="space-y-4">

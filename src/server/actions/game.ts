@@ -1,7 +1,5 @@
-"use server";
-
 /**
- * Server Action GENÉRICA de jogo — funciona para qualquer módulo registrado.
+ * Serviço genérico de processamento de palpites — funciona para qualquer módulo registrado.
  * O SERVIDOR é a autoridade (ver PRODUCT_AND_TECH_PLAN.md §16):
  * - Rederiva o desafio determinístico a partir de (dateKey, gameId).
  * - Valida estado e palpite via o próprio módulo (Zod dentro de parseState/parseGuess).
@@ -15,8 +13,6 @@ import { getGameModule } from "@/games/core/registry";
 import type { GameId } from "@/games/core/types";
 import { scoreToStars, type StarRating } from "@/lib/stars";
 import type { GuessFeedback } from "@/games/core/types";
-import { getAdminAuth, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
-import { countDailyCompleted, recordOfficialResult } from "@/server/repo/firestore";
 
 const inputSchema = z.object({
   gameId: z.string().min(1),
@@ -67,19 +63,11 @@ export async function submitGuess(input: unknown): Promise<SubmitResult> {
   const stars: StarRating | null = outcome.finished ? scoreToStars(score) : null;
 
   let recordedOfficial = false;
-  if (mode === "daily" && outcome.finished && idToken && isFirebaseAdminConfigured) {
+  if (typeof window === "undefined" && mode === "daily" && outcome.finished && idToken) {
     try {
-      const uid = (await getAdminAuth().verifyIdToken(idToken)).uid;
-      const already = await countDailyCompleted(uid, dateKey);
-      const res = await recordOfficialResult({
-        uid,
-        dateKey,
-        gameId,
-        score,
-        stars: stars ?? scoreToStars(score),
-        gamesCompletedToday: already + 1,
-      });
-      recordedOfficial = res.created;
+      const modPath = "./recordOfficial";
+      const { tryRecordOfficialResult } = await import(/* webpackIgnore: true */ modPath);
+      recordedOfficial = await tryRecordOfficialResult(idToken, dateKey, gameId, score);
     } catch {
       // best-effort: não quebra a jogabilidade.
     }
