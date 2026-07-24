@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Flame, Trophy, Infinity as InfinityIcon, ArrowRight, LogIn, Share2 } from "lucide-react";
+import { Flame, Trophy, Infinity as InfinityIcon, ArrowRight, LogIn, Share2, Users } from "lucide-react";
 import { LoginView } from "@/components/LoginView";
 import { ShareStoryModal } from "@/components/ShareStoryModal";
 import { GAME_CATALOG, isPlayable } from "@/games/core/registry";
@@ -135,6 +135,28 @@ export default function HomePage() {
         dateLabel={dateLabel}
         todayResults={todayResults}
       />
+
+      {/* Card Multiplayer / Jogar com Amigos */}
+      <Link
+        href="/friends"
+        className="flex items-center justify-between rounded-2xl border border-purple-500/40 bg-gradient-to-r from-purple-950/60 via-slate-900 to-slate-950 p-4 shadow-xl transition-all hover:border-purple-400 hover:scale-[1.01]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-purple-500 text-white font-black shadow-md">
+            <Users size={22} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-extrabold gd-text text-base">Jogar com Amigos</h3>
+              <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-black text-rose-400 border border-rose-500/30">
+                NOVO
+              </span>
+            </div>
+            <p className="text-xs gd-muted">Desafie a galera no Impostor Geek em tempo real!</p>
+          </div>
+        </div>
+        <ArrowRight size={18} className="text-purple-400" />
+      </Link>
 
       <section>
         <div className="mb-2 flex items-center justify-between">

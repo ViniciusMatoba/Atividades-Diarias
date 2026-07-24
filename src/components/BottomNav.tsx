@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Swords, Trophy, User, Sparkles } from "lucide-react";
+import { Home, Swords, Users, Trophy, User, Sparkles } from "lucide-react";
 
 import { useAuthCtx } from "@/lib/firebase/AuthProvider";
 
 const ITEMS = [
   { href: "/", label: "Início", icon: Home },
   { href: "/journey", label: "Jogos", icon: Swords },
-  { href: "/discoveries", label: "Descobertas", icon: Sparkles },
+  { href: "/friends", label: "Amigos", icon: Users },
+  { href: "/discoveries", label: "Coleção", icon: Sparkles },
   { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/profile", label: "Perfil", icon: User },
 ] as const;
