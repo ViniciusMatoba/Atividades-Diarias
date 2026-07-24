@@ -7,7 +7,7 @@
 export const MAX_GAME_SCORE = 1000;
 
 /** Número de jogos na jornada diária. */
-export const DAILY_GAME_COUNT = 5;
+export const DAILY_GAME_COUNT = 10;
 
 /** Pontuação máxima possível por dia. */
 export const MAX_DAILY_SCORE = MAX_GAME_SCORE * DAILY_GAME_COUNT;

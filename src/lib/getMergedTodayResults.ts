@@ -12,6 +12,11 @@ const GAME_IDS = [
   "poke-guess",
   "geek-connections",
   "who-came-first",
+  "movie-quote",
+  "pixel-guess",
+  "emoji-movie",
+  "flag-master",
+  "soundtrack-trivia",
 ];
 
 export function getMergedTodayResults(
@@ -52,9 +57,9 @@ export function getMergedTodayResults(
           score = Math.max(0, 1000 - extraClues * 80 - wrong * 60);
         }
       } else if (gameId === "world-pin") {
-        if (pub.submitted && pub.result) {
+        if (pub.finished || (pub.submitted && pub.result)) {
           isFinished = true;
-          score = pub.result.score ?? 0;
+          score = pub.solved ? Math.round(1000 * (1 - ((pub.guesses?.length ?? 1) - 1) / 6)) : 0;
         }
       } else if (gameId === "geek-connections") {
         if (pub.finished || pub.won || pub.solved?.length === 4 || pub.mistakes >= 4) {
@@ -77,6 +82,13 @@ export function getMergedTodayResults(
             const pairs = (po.length * (po.length - 1)) / 2;
             score = Math.round(1000 * (1 - inv / pairs));
           }
+        }
+      } else {
+        // movie-quote, pixel-guess, emoji-movie, flag-master, soundtrack-trivia
+        if (pub.finished) {
+          isFinished = true;
+          const attempts = pub.guesses?.length ?? 1;
+          score = pub.solved ? Math.round(1000 * (1 - (attempts - 1) / 5)) : 0;
         }
       }
 

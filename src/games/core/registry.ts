@@ -5,13 +5,14 @@ import { geekConnections } from "../geekConnections";
 import { pokeGuess } from "../pokeGuess";
 import { worldPin } from "../worldPin";
 
+import { movieQuote } from "../movieQuote";
+import { pixelGuess } from "../pixelGuess";
+import { emojiMovie } from "../emojiMovie";
+import { flagMaster } from "../flagMaster";
+import { soundtrackTrivia } from "../soundtrackTrivia";
+
 /**
  * Registry central de módulos de jogo.
- * Adicionar um jogo = criar `games/<id>/` e registrar aqui. Nenhuma outra
- * parte do app precisa mudar.
- *
- * Jogos ainda não implementados aparecem em `GAME_CATALOG` (metadados p/ UI)
- * mas não têm módulo de lógica jogável — a jornada os mostra como "em breve".
  */
 const modules: Partial<Record<GameId, AnyGameModule>> = {
   "mystery-country": mysteryCountry,
@@ -19,15 +20,25 @@ const modules: Partial<Record<GameId, AnyGameModule>> = {
   "geek-connections": geekConnections,
   "poke-guess": pokeGuess,
   "world-pin": worldPin,
+  "movie-quote": movieQuote,
+  "pixel-guess": pixelGuess,
+  "emoji-movie": emojiMovie,
+  "flag-master": flagMaster,
+  "soundtrack-trivia": soundtrackTrivia,
 };
 
-/** Metadados dos 5 jogos do MVP (todos jogáveis). */
+/** Metadados dos 10 jogos (todos jogáveis). */
 export const GAME_CATALOG: readonly GameMeta[] = [
   mysteryCountry.meta,
   worldPin.meta,
   pokeGuess.meta,
   geekConnections.meta,
   whoCameFirst.meta,
+  movieQuote.meta,
+  pixelGuess.meta,
+  emojiMovie.meta,
+  flagMaster.meta,
+  soundtrackTrivia.meta,
 ];
 
 export function getGameModule(id: GameId): AnyGameModule | undefined {

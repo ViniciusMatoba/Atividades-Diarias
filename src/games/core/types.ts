@@ -18,9 +18,14 @@ export type GameId =
   | "world-pin"
   | "poke-guess"
   | "geek-connections"
-  | "who-came-first";
+  | "who-came-first"
+  | "movie-quote"
+  | "pixel-guess"
+  | "emoji-movie"
+  | "flag-master"
+  | "soundtrack-trivia";
 
-export type GameTheme = "geo" | "pokemon" | "anime" | "movies" | "geek";
+export type GameTheme = "geo" | "pokemon" | "anime" | "movies" | "geek" | "music";
 
 export interface GameMeta {
   id: GameId;

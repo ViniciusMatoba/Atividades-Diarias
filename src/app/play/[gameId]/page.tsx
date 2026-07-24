@@ -16,12 +16,28 @@ import { GeekConnectionsGame } from "@/games/geekConnections/ui/GeekConnectionsG
 import { PokeGuessGame } from "@/games/pokeGuess/ui/PokeGuessGame";
 import { WorldPinGame } from "@/games/worldPin/ui/WorldPinGame";
 
+import { movieQuote } from "@/games/movieQuote";
+import { MovieQuoteGame } from "@/games/movieQuote/ui/MovieQuoteGame";
+import { pixelGuess } from "@/games/pixelGuess";
+import { PixelGuessGame } from "@/games/pixelGuess/ui/PixelGuessGame";
+import { emojiMovie } from "@/games/emojiMovie";
+import { EmojiMovieGame } from "@/games/emojiMovie/ui/EmojiMovieGame";
+import { flagMaster } from "@/games/flagMaster";
+import { FlagMasterGame } from "@/games/flagMaster/ui/FlagMasterGame";
+import { soundtrackTrivia } from "@/games/soundtrackTrivia";
+import { SoundtrackTriviaGame } from "@/games/soundtrackTrivia/ui/SoundtrackTriviaGame";
+
 const KNOWN_IDS: GameId[] = [
   "mystery-country",
   "world-pin",
   "poke-guess",
   "geek-connections",
   "who-came-first",
+  "movie-quote",
+  "pixel-guess",
+  "emoji-movie",
+  "flag-master",
+  "soundtrack-trivia",
 ];
 
 export function generateStaticParams() {
@@ -56,6 +72,16 @@ export default async function PlayPage({
         <PokeGuessReference mode={mode} />
       ) : id === "world-pin" ? (
         <WorldPinReference mode={mode} />
+      ) : id === "movie-quote" ? (
+        <MovieQuoteReference mode={mode} />
+      ) : id === "pixel-guess" ? (
+        <PixelGuessReference mode={mode} />
+      ) : id === "emoji-movie" ? (
+        <EmojiMovieReference mode={mode} />
+      ) : id === "flag-master" ? (
+        <FlagMasterReference mode={mode} />
+      ) : id === "soundtrack-trivia" ? (
+        <SoundtrackTriviaReference mode={mode} />
       ) : (
         <ComingSoon name={meta.name} playable={isPlayable(id)} />
       )}
@@ -121,6 +147,51 @@ function WorldPinReference({ mode }: { mode: "daily" | "infinite" }) {
   const initialPublic = worldPin.toPublic(challenge, state);
 
   return <WorldPinGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
+}
+
+function MovieQuoteReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = movieQuote.generateChallenge(`${dateKey}:movie-quote`);
+  const state = movieQuote.initialState(challenge);
+  const initialPublic = movieQuote.toPublic(challenge, state);
+
+  return <MovieQuoteGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
+}
+
+function PixelGuessReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = pixelGuess.generateChallenge(`${dateKey}:pixel-guess`);
+  const state = pixelGuess.initialState(challenge);
+  const initialPublic = pixelGuess.toPublic(challenge, state);
+
+  return <PixelGuessGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
+}
+
+function EmojiMovieReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = emojiMovie.generateChallenge(`${dateKey}:emoji-movie`);
+  const state = emojiMovie.initialState(challenge);
+  const initialPublic = emojiMovie.toPublic(challenge, state);
+
+  return <EmojiMovieGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
+}
+
+function FlagMasterReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = flagMaster.generateChallenge(`${dateKey}:flag-master`);
+  const state = flagMaster.initialState(challenge);
+  const initialPublic = flagMaster.toPublic(challenge, state);
+
+  return <FlagMasterGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
+}
+
+function SoundtrackTriviaReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = soundtrackTrivia.generateChallenge(`${dateKey}:soundtrack-trivia`);
+  const state = soundtrackTrivia.initialState(challenge);
+  const initialPublic = soundtrackTrivia.toPublic(challenge, state);
+
+  return <SoundtrackTriviaGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
 }
 
 function ComingSoon({ name, playable }: { name: string; playable: boolean }) {
