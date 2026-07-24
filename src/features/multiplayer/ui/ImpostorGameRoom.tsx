@@ -15,13 +15,16 @@ import {
   Sparkles,
   Shield,
   UserX,
+  Brain,
 } from "lucide-react";
-import type { ImpostorRoom, MultiplayerPlayer } from "../types";
+import type { ImpostorRoom, MultiplayerPlayer, GameMode } from "../types";
 import {
   subscribeToRoom,
   startNewRound,
   submitPlayerHint,
   submitPlayerVote,
+  submitHerdAnswer,
+  setRoomGameMode,
 } from "../services/roomService";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -37,6 +40,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
   const [copied, setCopied] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
   const [hintInput, setHintInput] = useState("");
+  const [herdInput, setHerdInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [selectedVoteId, setSelectedVoteId] = useState("");
 
@@ -49,7 +53,10 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
 
   const isHost = currentPlayer.id === room.hostId;
   const isImpostor = currentPlayer.id === room.impostorId;
+  const isHerdMode = room.gameMode === "herd";
+
   const myHint = room.hints.find((h) => h.playerId === currentPlayer.id);
+  const myHerdAns = (room.herdAnswers ?? []).find((a) => a.playerId === currentPlayer.id);
   const myVote = room.votes.find((v) => v.voterId === currentPlayer.id);
 
   function copyCode() {
@@ -60,6 +67,13 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
     }
   }
 
+  async function handleToggleMode(mode: GameMode) {
+    if (!isHost || busy) return;
+    setBusy(true);
+    await setRoomGameMode(room.id, mode);
+    setBusy(false);
+  }
+
   async function handleStartRound() {
     if (!isHost || busy) return;
     setBusy(true);
@@ -67,6 +81,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
     setBusy(false);
     setShowSecret(false);
     setHintInput("");
+    setHerdInput("");
     setSelectedVoteId("");
   }
 
@@ -79,6 +94,18 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
       hintText: hintInput.trim(),
     });
     setHintInput("");
+    setBusy(false);
+  }
+
+  async function handleSendHerdAnswer() {
+    if (!herdInput.trim() || busy) return;
+    setBusy(true);
+    await submitHerdAnswer(room.id, {
+      playerId: currentPlayer.id,
+      playerName: currentPlayer.name,
+      answerText: herdInput.trim(),
+    });
+    setHerdInput("");
     setBusy(false);
   }
 
@@ -98,7 +125,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
       <header className="flex items-center justify-between rounded-2xl gd-glass p-4 border gd-border shadow-md">
         <div>
           <span className="block text-[10px] uppercase font-black tracking-wider text-purple-400">
-            Sala de Amigos
+            {isHerdMode ? "🧠 Mente Coletiva" : "🕵️‍♂️ Impostor Geek"}
           </span>
           <h1 className="text-2xl font-black gd-text tracking-widest flex items-center gap-2">
             {room.id}
@@ -120,12 +147,49 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
         <Card className="p-6 text-center space-y-6 border-purple-500/30">
           <div className="space-y-2">
             <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-purple-500/20 text-purple-400 border border-purple-500/40 shadow-lg">
-              <Users size={32} />
+              {isHerdMode ? <Brain size={32} /> : <Users size={32} />}
             </div>
             <h2 className="text-2xl font-black gd-text">Aguardando Amigos</h2>
             <p className="text-xs gd-muted">
               Compartilhe o código <strong className="text-purple-300 font-bold">{room.id}</strong> para jogarem juntos!
             </p>
+          </div>
+
+          {/* Seleção do Modo de Jogo */}
+          <div className="space-y-2 text-left">
+            <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
+              Modo de Jogo Escolhido
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                disabled={!isHost}
+                onClick={() => handleToggleMode("impostor")}
+                className={`p-3 rounded-xl border text-left font-bold text-xs transition-all ${
+                  !isHerdMode
+                    ? "border-purple-500 bg-purple-500/20 text-white shadow-md"
+                    : "gd-border gd-surface gd-muted opacity-70"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1 font-black text-purple-300">
+                  <UserX size={14} /> Impostor Geek
+                </div>
+                Descubra quem não sabe a palavra secreta!
+              </button>
+              <button
+                disabled={!isHost}
+                onClick={() => handleToggleMode("herd")}
+                className={`p-3 rounded-xl border text-left font-bold text-xs transition-all ${
+                  isHerdMode
+                    ? "border-purple-500 bg-purple-500/20 text-white shadow-md"
+                    : "gd-border gd-surface gd-muted opacity-70"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 mb-1 font-black text-purple-300">
+                  <Brain size={14} /> Mente Coletiva
+                </div>
+                Responda igual à maioria da sala para vencer!
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2 text-left">
@@ -159,7 +223,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
               size="lg"
               className="w-full font-bold shadow-lg"
             >
-              <Play size={18} /> Iniciar Rodada
+              <Play size={18} /> Iniciar Rodada ({isHerdMode ? "Mente Coletiva" : "Impostor Geek"})
             </Button>
           ) : (
             <p className="text-xs font-bold text-purple-300 animate-pulse">
@@ -169,10 +233,71 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
         </Card>
       )}
 
-      {/* TELA DE DICAS (FASE 1 DA RODADA) */}
-      {room.status === "hints" && (
+      {/* TELA DA RODADA DE MENTE COLETIVA */}
+      {isHerdMode && room.status === "hints" && (
         <div className="space-y-4">
-          {/* Card do Papel Secreto */}
+          <div className="relative overflow-hidden rounded-2xl border border-purple-500/60 bg-gradient-to-br from-slate-950 via-purple-950/40 to-slate-900 p-6 text-center shadow-xl">
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-purple-300 border border-white/10">
+              Categoria: {room.category}
+            </span>
+            <div className="my-5">
+              <Brain size={40} className="mx-auto text-purple-400 mb-2 animate-bounce" />
+              <h3 className="text-xl font-black text-white leading-relaxed">
+                &quot;{room.herdQuestion}&quot;
+              </h3>
+              <p className="mt-2 text-xs text-purple-300/90 font-semibold">
+                Escreva a resposta que você acha que a MAIORIA da sala vai digitar!
+              </p>
+            </div>
+          </div>
+
+          <Card className="p-4 space-y-3">
+            <h3 className="text-sm font-extrabold gd-text flex items-center gap-2">
+              <Sparkles size={16} className="text-amber-400" /> Sua Resposta Secreta
+            </h3>
+            {myHerdAns ? (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-center text-sm font-bold text-emerald-300">
+                ✓ Resposta enviada: &quot;{myHerdAns.answerText}&quot; (Aguardando outros jogadores…)
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={herdInput}
+                  onChange={(e) => setHerdInput(e.target.value)}
+                  placeholder="Digite sua resposta..."
+                  className="flex-1 rounded-xl border gd-border gd-surface px-3.5 py-2.5 text-sm font-bold gd-text focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <Button onClick={handleSendHerdAnswer} disabled={!herdInput.trim() || busy}>
+                  <Send size={16} />
+                </Button>
+              </div>
+            )}
+          </Card>
+
+          <div className="space-y-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
+              Respostas Enviadas ({room.herdAnswers?.length ?? 0}/{room.players.length})
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              {room.players.map((p) => {
+                const hasAns = (room.herdAnswers ?? []).some((a) => a.playerId === p.id);
+                return (
+                  <div key={p.id} className="flex items-center gap-2 rounded-xl border gd-border gd-surface p-2.5 text-xs font-bold">
+                    <span>{p.avatar}</span>
+                    <span className="gd-text flex-1 truncate">{p.name}</span>
+                    {hasAns ? <Check size={14} className="text-emerald-400" /> : <span className="text-purple-400 animate-pulse">…</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TELA DE DICAS DE IMPOSTOR GEEK */}
+      {!isHerdMode && room.status === "hints" && (
+        <div className="space-y-4">
           <div
             className={`relative overflow-hidden rounded-2xl border p-6 text-center shadow-xl transition-all ${
               isImpostor
@@ -222,7 +347,6 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
             </div>
           </div>
 
-          {/* Envio de Dica */}
           <Card className="p-4 space-y-3">
             <h3 className="text-sm font-extrabold gd-text flex items-center gap-2">
               <Sparkles size={16} className="text-amber-400" /> Escreva sua Dica da Rodada
@@ -247,7 +371,6 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
             )}
           </Card>
 
-          {/* Lista de Dicas Recebidas */}
           <div className="space-y-2">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
               Dicas dos Jogadores ({room.hints.length}/{room.players.length})
@@ -267,8 +390,8 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
         </div>
       )}
 
-      {/* TELA DE VOTAÇÃO (FASE 2 DA RODADA) */}
-      {room.status === "voting" && (
+      {/* TELA DE VOTAÇÃO (APENAS IMPOSTOR GEEK) */}
+      {!isHerdMode && room.status === "voting" && (
         <Card className="p-6 space-y-6 text-center border-purple-500/40">
           <div className="space-y-1">
             <Vote size={32} className="mx-auto text-purple-400 mb-1" />
@@ -276,7 +399,6 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
             <p className="text-xs gd-muted">Quem você acha que é o Impostor da rodada?</p>
           </div>
 
-          {/* Dicas da rodada para releitura */}
           <div className="space-y-2 text-left">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
               Dicas dadas nesta rodada:
@@ -291,7 +413,6 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
             </div>
           </div>
 
-          {/* Opções de Voto */}
           {myVote ? (
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center text-sm font-bold text-emerald-300">
               ✓ Voto registrado! Aguardando o restante da sala…
@@ -300,7 +421,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
             <div className="space-y-3">
               <div className="space-y-2">
                 {room.players.map((p) => {
-                  if (p.id === currentPlayer.id) return null; // Não pode votar em si mesmo
+                  if (p.id === currentPlayer.id) return null;
                   return (
                     <button
                       key={p.id}
@@ -339,29 +460,64 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
           <div className="space-y-2">
             <Trophy size={48} className="mx-auto text-amber-400 animate-bounce" />
             <h2 className="text-3xl font-black gd-text">
-              {room.winner === "players" ? "🎉 Jogadores Venceram!" : "🕵️‍♂️ Impostor Venceu!"}
+              {isHerdMode
+                ? "🧠 Resposta do Rebanho!"
+                : room.winner === "players"
+                ? "🎉 Jogadores Venceram!"
+                : "🕵️‍♂️ Impostor Venceu!"}
             </h2>
             <p className="text-xs gd-muted">
-              {room.winner === "players"
+              {isHerdMode
+                ? `A maioria respondeu: "${(room.majorityAnswers ?? []).join(" / ")}"`
+                : room.winner === "players"
                 ? "O grupo identificou o impostor com sucesso!"
                 : "O impostor conseguiu enganar a sala completa!"}
             </p>
           </div>
 
-          <div className="rounded-2xl border gd-border bg-black/40 p-4 space-y-2 text-center">
-            <span className="text-xs uppercase font-bold text-purple-300">Revelação da Rodada</span>
-            <p className="text-sm font-bold gd-text">
-              Palavra Secreta: <strong className="text-purple-300 font-extrabold">{room.secretWord}</strong>
-            </p>
-            <p className="text-sm font-bold text-rose-400">
-              Impostor Secreto: {room.players.find((p) => p.id === room.impostorId)?.name}
-            </p>
-          </div>
+          {/* Respostas da Mente Coletiva */}
+          {isHerdMode ? (
+            <div className="space-y-2 text-left">
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
+                Respostas de Todos os Jogadores:
+              </span>
+              <div className="space-y-2">
+                {(room.herdAnswers ?? []).map((ans) => {
+                  const isMajority = (room.majorityAnswers ?? []).some(
+                    (m) => m.toLowerCase().trim() === ans.answerText.toLowerCase().trim()
+                  );
+                  return (
+                    <div
+                      key={ans.playerId}
+                      className={`flex items-center justify-between rounded-xl border p-3 font-bold text-sm ${
+                        isMajority
+                          ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-300"
+                          : "gd-border gd-surface gd-muted"
+                      }`}
+                    >
+                      <span>{ans.playerName}</span>
+                      <span className="font-extrabold">&quot;{ans.answerText}&quot; {isMajority ? "🏆 (+300 pts)" : ""}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border gd-border bg-black/40 p-4 space-y-2 text-center">
+              <span className="text-xs uppercase font-bold text-purple-300">Revelação da Rodada</span>
+              <p className="text-sm font-bold gd-text">
+                Palavra Secreta: <strong className="text-purple-300 font-extrabold">{room.secretWord}</strong>
+              </p>
+              <p className="text-sm font-bold text-rose-400">
+                Impostor Secreto: {room.players.find((p) => p.id === room.impostorId)?.name}
+              </p>
+            </div>
+          )}
 
           {/* Ranking Atualizado da Sala */}
           <div className="space-y-2 text-left">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
-              Placar da Sala
+              Placar Geral da Sala
             </span>
             <div className="space-y-1.5">
               {room.players
@@ -383,7 +539,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
 
           {isHost && (
             <Button onClick={handleStartRound} disabled={busy} size="lg" className="w-full font-bold shadow-lg">
-              <RotateCcw size={18} /> Jogar Próxima Rodada
+              <RotateCcw size={18} /> Próxima Rodada ({isHerdMode ? "Mente Coletiva" : "Impostor Geek"})
             </Button>
           )}
         </Card>

@@ -43,12 +43,41 @@ export const IMPOSTOR_WORDS_CATALOG: readonly ImpostorCategoryWord[] = [
   { category: "Sci-Fi", word: "Matrix", hint: "Mundo virtual das máquinas" },
 ];
 
+export interface HerdPrompt {
+  id: string;
+  question: string;
+  category: string;
+}
+
+export interface PlayerHerdAnswer {
+  playerId: string;
+  playerName: string;
+  answerText: string;
+}
+
+export const HERD_PROMPTS_CATALOG: readonly HerdPrompt[] = [
+  { id: "1", category: "Videogames", question: "Qual é o melhor console de videogame de todos os tempos?" },
+  { id: "2", category: "Cinema & Marvel", question: "Qual é o super-herói mais famoso do mundo?" },
+  { id: "3", category: "Comida & Snacks", question: "Qual é a melhor comida para comer enquanto joga?" },
+  { id: "4", category: "Cultura Geek", question: "Se você pudesse ter 1 superpoder, qual escolheria?" },
+  { id: "5", category: "Animes & Mangás", question: "Qual é o anime mais marcante da infância?" },
+  { id: "6", category: "Filmes", question: "Qual é o melhor filme da saga Star Wars?" },
+  { id: "7", category: "Pokémon", question: "Qual é o Pokémon mais icônico depois do Pikachu?" },
+  { id: "8", category: "Séries", question: "Qual é a série mais viciante para fazer maratona?" },
+  { id: "9", category: "Dia a Dia", question: "Qual é a primeira coisa que você faz ao acordar?" },
+  { id: "10", category: "Vilões", question: "Qual é o vilão mais inesquecível do cinema ou jogos?" },
+  { id: "11", category: "Comida", question: "Qual é o melhor sabor de pizza que existe?" },
+  { id: "12", category: "Geek", question: "Qual é a melhor franquia de jogos de mundo aberto?" },
+];
+
+export type GameMode = "impostor" | "herd";
 export type RoomStatus = "lobby" | "hints" | "voting" | "result";
 
 export interface ImpostorRoom {
   id: string; // ex: GEEK-4921
   createdAt: number;
   hostId: string;
+  gameMode: GameMode;
   status: RoomStatus;
   category: string;
   secretWord: string;
@@ -56,6 +85,9 @@ export interface ImpostorRoom {
   players: MultiplayerPlayer[];
   hints: PlayerHint[];
   votes: PlayerVote[];
+  herdQuestion?: string;
+  herdAnswers?: PlayerHerdAnswer[];
+  majorityAnswers?: string[];
   impostorFinalGuess?: string;
-  winner?: "players" | "impostor";
+  winner?: "players" | "impostor" | "herd_winners";
 }
