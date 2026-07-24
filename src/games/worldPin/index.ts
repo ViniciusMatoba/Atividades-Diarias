@@ -2,14 +2,7 @@ import { z } from "zod";
 import type { GameModule, GameResult, GuessOutcome } from "@/games/core/types";
 import { pickDeterministic } from "@/games/core/seed";
 import { PIN_COUNTRIES, getPinCountry } from "./data/pinCountries";
-import {
-  bearingDirection,
-  haversineKm,
-  proximityPct,
-  scoreWorldPin,
-  WORLD_PIN_CONFIG,
-  type CompassDirection,
-} from "./scoring";
+import { haversineKm, scoreWorldPin, WORLD_PIN_CONFIG } from "./scoring";
 
 // ---- Tipos ----
 // Mecânica: o pino aparece no local do país-resposta; o jogador ADIVINHA o país.
@@ -30,8 +23,6 @@ export interface WorldPinGuessRow {
   name: string;
   code: string;
   distanceKm: number;
-  direction: CompassDirection | null; // null quando é o acerto
-  proximityPct: number; // 0..100
   correct: boolean;
 }
 
@@ -62,18 +53,10 @@ function rowFor(guessId: string, answerLatLon: { lat: number; lon: number }, ans
   const g = getPinCountry(guessId);
   const correct = guessId === answerId;
   if (!g) {
-    return { id: guessId, name: guessId, code: "", distanceKm: 0, direction: null, proximityPct: 0, correct };
+    return { id: guessId, name: guessId, code: "", distanceKm: 0, correct };
   }
   const distanceKm = Math.round(haversineKm({ lat: g.lat, lon: g.lon }, answerLatLon));
-  return {
-    id: guessId,
-    name: g.name,
-    code: g.code,
-    distanceKm,
-    direction: correct ? null : bearingDirection({ lat: g.lat, lon: g.lon }, answerLatLon),
-    proximityPct: correct ? 100 : proximityPct(distanceKm),
-    correct,
-  };
+  return { id: guessId, name: g.name, code: g.code, distanceKm, correct };
 }
 
 // ---- Módulo ----
@@ -136,8 +119,8 @@ export const worldPin: GameModule<WorldPinChallenge, WorldPinPublic, WorldPinSta
         correct: false,
         message: outOfGuesses
           ? `Fim! Era ${answer.name}.`
-          : `${row.distanceKm.toLocaleString("pt-BR")} km a ${row.direction} do alvo.`,
-        details: { distanceKm: row.distanceKm, direction: row.direction },
+          : `${row.distanceKm.toLocaleString("pt-BR")} km do país correto.`,
+        details: { distanceKm: row.distanceKm },
       },
       finished: outOfGuesses,
       solved: false,

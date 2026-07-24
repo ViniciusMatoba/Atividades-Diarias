@@ -22,7 +22,7 @@ describe("worldPin.applyGuess (adivinhar o país)", () => {
     expect(worldPin.score(c, out.state)).toBe(1000);
   });
 
-  it("erro revela distância e direção, sem encerrar antes do limite", () => {
+  it("erro revela a distância, sem encerrar antes do limite", () => {
     const c = { countryId: "brasil" };
     const wrong = "japao";
     const out = worldPin.applyGuess(c, worldPin.initialState(c), { countryId: wrong });
@@ -31,7 +31,6 @@ describe("worldPin.applyGuess (adivinhar o país)", () => {
     const pub = worldPin.toPublic(c, out.state);
     const row = pub.guesses[0]!;
     expect(row.distanceKm).toBeGreaterThan(0);
-    expect(row.direction).toBeTruthy();
     expect(pub.guessesRemaining).toBe(5);
   });
 

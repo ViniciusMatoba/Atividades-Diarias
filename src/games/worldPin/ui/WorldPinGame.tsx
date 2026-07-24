@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, RotateCcw, Navigation, BookOpen, Check } from "lucide-react";
+import { MapPin, RotateCcw, BookOpen, Check } from "lucide-react";
 import { submitGuess } from "@/server/actions/game";
 import type { WorldPinPublic, WorldPinState, WorldPinGuessRow } from "@/games/worldPin";
 import { getPinFlagUrl } from "@/games/worldPin/data/pinCountries";
@@ -14,7 +14,9 @@ import { isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { getIdToken } from "@/lib/firebase/auth";
 import { useAuthCtx } from "@/lib/firebase/AuthProvider";
 import { usePersistedGameState } from "@/lib/usePersistedGameState";
-import { WorldMapGraphic } from "@/games/worldPin/ui/WorldMapGraphic";
+
+// Textura equirretangular real da Terra (NASA Blue Marble, 2:1 — casa com o viewBox 360x180).
+const EARTH_TEXTURE_URL = "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
 
 interface Props {
   dateKey: string;
@@ -47,12 +49,9 @@ function GuessRow({ row }: { row: WorldPinGuessRow }) {
           <Check size={16} aria-hidden /> Acertou!
         </span>
       ) : (
-        <div className="flex items-center gap-2 text-right">
-          <span className="text-xs font-bold gd-text">{row.distanceKm.toLocaleString("pt-BR")} km</span>
-          <span className="flex items-center gap-0.5 text-xs font-semibold text-[var(--color-warning)]">
-            <Navigation size={12} aria-hidden /> {row.direction}
-          </span>
-        </div>
+        <span className="shrink-0 rounded-lg gd-surface-2 px-2 py-1 text-xs font-bold text-[var(--color-warning)]">
+          {row.distanceKm.toLocaleString("pt-BR")} km
+        </span>
       )}
     </div>
   );
@@ -134,7 +133,15 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
           role="img"
           aria-label="Mapa-múndi com o país-alvo marcado"
         >
-          <WorldMapGraphic />
+          {/* Globo terrestre real (imagem de satélite equirretangular) */}
+          <image
+            href={EARTH_TEXTURE_URL}
+            x={0}
+            y={0}
+            width={360}
+            height={180}
+            preserveAspectRatio="none"
+          />
           {/* pino do país-alvo (localização mostrada; nome escondido até o fim) */}
           <g>
             <circle cx={pin.x} cy={pin.y} r={8} fill="#ef4444" opacity={0.35} className="animate-ping" />
