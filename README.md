@@ -1,9 +1,11 @@
 # GeekDaily 🎮
 
 Web app de **microgames diários** de cultura geek (mapas/países, Pokémon, anime, filmes/séries, games).
-Uma jornada diária de ~5–10 min com 5 microgames + modo infinito.
+Uma jornada diária de ~5–10 min com 5 microgames + modo infinito + Descobertas do Dia.
 
-> **Status:** Fundação do MVP (Fases 1–5 da primeira missão). Ver [`PRODUCT_AND_TECH_PLAN.md`](./PRODUCT_AND_TECH_PLAN.md) e [`GAME_RULES.md`](./GAME_RULES.md).
+> 🌐 **Deploy no GitHub Pages:** [https://viniciusmatoba.github.io/Atividades-Diarias/](https://viniciusmatoba.github.io/Atividades-Diarias/)
+> 
+> **Status:** MVP com 5 microgames + Descobertas do Dia + PokédexDidática. Ver [`PRODUCT_AND_TECH_PLAN.md`](./PRODUCT_AND_TECH_PLAN.md) e [`DAILY_DISCOVERIES_PLAN.md`](./DAILY_DISCOVERIES_PLAN.md).
 
 ## Stack
 
