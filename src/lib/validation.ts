@@ -19,20 +19,5 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
-/** Estado serializado do País Misterioso vindo do cliente (não contém a resposta). */
-export const mysteryStateSchema = z.object({
-  revealedClues: z.number().int().min(1).max(10),
-  guesses: z.array(z.string().min(1)).max(6),
-  finished: z.boolean(),
-  solved: z.boolean(),
-});
-
-export const submitMysteryGuessSchema = z.object({
-  dateKey: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Chave de data inválida."),
-  state: mysteryStateSchema,
-  countryId: z.string().min(1),
-  mode: z.enum(["daily", "infinite"]).default("daily"),
-  /** ID token do Firebase Auth (opcional; presente quando logado). */
-  idToken: z.string().min(1).optional(),
-});
-export type SubmitMysteryGuessInput = z.infer<typeof submitMysteryGuessSchema>;
+// A validação de estado/palpite de cada jogo vive no próprio módulo
+// (parseState/parseGuess) e é usada pela Server Action genérica submitGuess.

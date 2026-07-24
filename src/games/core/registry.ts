@@ -1,5 +1,6 @@
 import type { AnyGameModule, GameId, GameMeta } from "./types";
 import { mysteryCountry } from "../mysteryCountry";
+import { whoCameFirst } from "../whoCameFirst";
 
 /**
  * Registry central de módulos de jogo.
@@ -11,6 +12,7 @@ import { mysteryCountry } from "../mysteryCountry";
  */
 const modules: Partial<Record<GameId, AnyGameModule>> = {
   "mystery-country": mysteryCountry,
+  "who-came-first": whoCameFirst,
 };
 
 /** Metadados de todos os 5 jogos do MVP (mesmo os ainda não jogáveis). */
@@ -40,14 +42,7 @@ export const GAME_CATALOG: readonly GameMeta[] = [
     theme: "geek",
     order: 4,
   },
-  {
-    id: "who-came-first",
-    name: "Quem Veio Primeiro?",
-    description: "Ordene os itens do mais antigo ao mais recente.",
-    icon: "ArrowDownUp",
-    theme: "movies",
-    order: 5,
-  },
+  whoCameFirst.meta,
 ];
 
 export function getGameModule(id: GameId): AnyGameModule | undefined {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Globe2, Check, X, RotateCcw } from "lucide-react";
-import { submitMysteryGuess } from "@/server/actions/mysteryCountry";
+import { submitGuess } from "@/server/actions/game";
 import type { MysteryCountryState, MysteryCountryPublic } from "@/games/mysteryCountry";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -42,10 +42,11 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
     setBusy(true);
     setError(null);
     const idToken = isFirebaseClientConfigured ? await getIdToken() : null;
-    const res = await submitMysteryGuess({
+    const res = await submitGuess({
+      gameId: "mystery-country",
       dateKey,
       state,
-      countryId: selected,
+      guess: { countryId: selected },
       mode,
       ...(idToken ? { idToken } : {}),
     });
@@ -54,10 +55,11 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
       setError(res.error ?? "Erro ao enviar palpite.");
       return;
     }
-    setPub(res.public);
-    setState(res.state);
+    const pubData = res.public as MysteryCountryPublic;
+    setPub(pubData);
+    setState(res.state as MysteryCountryState);
     setSelected("");
-    const lastGuess = res.public.guesses.at(-1);
+    const lastGuess = pubData.guesses.at(-1);
     setLastMessage(lastGuess?.correct ? "Acertou! 🎉" : "Não é esse. Nova pista liberada!");
     // Se gravou resultado oficial, atualiza o dashboard (home/perfil).
     if (res.recordedOfficial) void refresh();

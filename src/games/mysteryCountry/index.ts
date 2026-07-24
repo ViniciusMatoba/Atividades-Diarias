@@ -62,6 +62,13 @@ const guessSchema = z.object({
   countryId: z.string().min(1),
 });
 
+const stateSchema = z.object({
+  revealedClues: z.number().int().min(1).max(10),
+  guesses: z.array(z.string().min(1)).max(6),
+  finished: z.boolean(),
+  solved: z.boolean(),
+});
+
 function countWrong(state: MysteryCountryState, answerId: string): number {
   return state.guesses.filter((g) => g !== answerId).length;
 }
@@ -90,6 +97,10 @@ export const mysteryCountry: GameModule<
 
   initialState(): MysteryCountryState {
     return { revealedClues: 1, guesses: [], finished: false, solved: false };
+  },
+
+  parseState(raw: unknown): MysteryCountryState {
+    return stateSchema.parse(raw);
   },
 
   parseGuess(raw: unknown): MysteryCountryGuess {

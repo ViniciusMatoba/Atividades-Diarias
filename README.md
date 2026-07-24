@@ -76,9 +76,19 @@ npx firebase deploy --only firestore:rules,firestore:indexes   # regras/índices
 
 ## O que já funciona
 
-- Telas (mock): Início, Jornada, Modo Infinito, Ranking, Perfil, Resultado, Login, Cadastro.
-- **País Misterioso** jogável: pistas progressivas, palpites, pontuação, replay sem sobrescrever.
-- Testes de: pontuação, estrelas, XP, streak, chave diária (fuso), seed, conquistas e regras do jogo.
+- **Firebase ao vivo:** cadastro/login (Firebase Auth), perfil no Firestore,
+  pontuação oficial idempotente, ranking agregado, streak e XP — validado E2E.
+- **2 jogos jogáveis:** País Misterioso (pistas progressivas) e Quem Veio
+  Primeiro? (ordenação cronológica), ambos via a Server Action genérica.
+- Home, Jornada e Perfil lêem **dados reais** do usuário logado.
+- Telas ainda em mock: Ranking e Resultado do dia.
+- 67 testes: pontuação, estrelas, XP, streak, chave diária/semana (fuso), seed,
+  conquistas e regras dos jogos.
+
+## Adicionar um novo jogo
+
+Veja **[docs/ADDING_A_GAME.md](./docs/ADDING_A_GAME.md)** — a arquitetura é
+plugável (implementar `GameModule` + 1 linha no registry).
 
 ## Próximos passos
 

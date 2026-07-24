@@ -73,6 +73,9 @@ export interface GameModule<TChallenge, TPublic, TState, TGuess> {
   /** Estado inicial de uma nova partida. */
   initialState(challenge: TChallenge): TState;
 
+  /** Valida/normaliza o estado serializado vindo do cliente (lançar se inválido). */
+  parseState(raw: unknown): TState;
+
   /** Valida e normaliza um palpite bruto (lançar em caso de payload inválido). */
   parseGuess(raw: unknown): TGuess;
 

@@ -5,8 +5,10 @@ import { getGameMeta, isPlayable } from "@/games/core/registry";
 import type { GameId } from "@/games/core/types";
 import { mysteryCountry } from "@/games/mysteryCountry";
 import { COUNTRIES } from "@/games/mysteryCountry/data/countries";
+import { whoCameFirst } from "@/games/whoCameFirst";
 import { getDailyKey } from "@/lib/dailyKey";
 import { MysteryCountryGame } from "@/games/mysteryCountry/ui/MysteryCountryGame";
+import { WhoCameFirstGame } from "@/games/whoCameFirst/ui/WhoCameFirstGame";
 
 const KNOWN_IDS: GameId[] = [
   "mystery-country",
@@ -39,6 +41,8 @@ export default async function PlayPage({
 
       {id === "mystery-country" ? (
         <MysteryCountryReference mode={mode} />
+      ) : id === "who-came-first" ? (
+        <WhoCameFirstReference mode={mode} />
       ) : (
         <ComingSoon name={meta.name} playable={isPlayable(id)} />
       )}
@@ -66,6 +70,15 @@ function MysteryCountryReference({ mode }: { mode: "daily" | "infinite" }) {
       mode={mode}
     />
   );
+}
+
+function WhoCameFirstReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = whoCameFirst.generateChallenge(`${dateKey}:who-came-first`);
+  const state = whoCameFirst.initialState(challenge);
+  const initialPublic = whoCameFirst.toPublic(challenge, state); // sem anos/resposta
+
+  return <WhoCameFirstGame dateKey={dateKey} initialPublic={initialPublic} mode={mode} />;
 }
 
 function ComingSoon({ name, playable }: { name: string; playable: boolean }) {
