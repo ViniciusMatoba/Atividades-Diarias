@@ -24,8 +24,8 @@ import { emojiMovie } from "@/games/emojiMovie";
 import { EmojiMovieGame } from "@/games/emojiMovie/ui/EmojiMovieGame";
 import { flagMaster } from "@/games/flagMaster";
 import { FlagMasterGame } from "@/games/flagMaster/ui/FlagMasterGame";
-import { soundtrackTrivia } from "@/games/soundtrackTrivia";
-import { SoundtrackTriviaGame } from "@/games/soundtrackTrivia/ui/SoundtrackTriviaGame";
+import { geekCharacter } from "@/games/geekCharacter";
+import { GeekCharacterGame } from "@/games/geekCharacter/ui/GeekCharacterGame";
 
 const KNOWN_IDS: GameId[] = [
   "mystery-country",
@@ -37,7 +37,7 @@ const KNOWN_IDS: GameId[] = [
   "pixel-guess",
   "emoji-movie",
   "flag-master",
-  "soundtrack-trivia",
+  "geek-character",
 ];
 
 export function generateStaticParams() {
@@ -80,8 +80,8 @@ export default async function PlayPage({
         <EmojiMovieReference mode={mode} />
       ) : id === "flag-master" ? (
         <FlagMasterReference mode={mode} />
-      ) : id === "soundtrack-trivia" ? (
-        <SoundtrackTriviaReference mode={mode} />
+      ) : id === "geek-character" ? (
+        <GeekCharacterReference mode={mode} />
       ) : (
         <ComingSoon name={meta.name} playable={isPlayable(id)} />
       )}
@@ -185,13 +185,13 @@ function FlagMasterReference({ mode }: { mode: "daily" | "infinite" }) {
   return <FlagMasterGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
 }
 
-function SoundtrackTriviaReference({ mode }: { mode: "daily" | "infinite" }) {
+function GeekCharacterReference({ mode }: { mode: "daily" | "infinite" }) {
   const dateKey = getDailyKey();
-  const challenge = soundtrackTrivia.generateChallenge(`${dateKey}:soundtrack-trivia`);
-  const state = soundtrackTrivia.initialState(challenge);
-  const initialPublic = soundtrackTrivia.toPublic(challenge, state);
+  const challenge = geekCharacter.generateChallenge(`${dateKey}:geek-character`);
+  const state = geekCharacter.initialState(challenge);
+  const initialPublic = geekCharacter.toPublic(challenge, state);
 
-  return <SoundtrackTriviaGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
+  return <GeekCharacterGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
 }
 
 function ComingSoon({ name, playable }: { name: string; playable: boolean }) {

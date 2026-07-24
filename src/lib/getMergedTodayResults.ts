@@ -16,7 +16,7 @@ const GAME_IDS = [
   "pixel-guess",
   "emoji-movie",
   "flag-master",
-  "soundtrack-trivia",
+  "geek-character",
 ];
 
 export function getMergedTodayResults(

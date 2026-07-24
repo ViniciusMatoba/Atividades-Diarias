@@ -9,7 +9,7 @@ import { wordScramble } from "../wordScramble";
 import { pixelGuess } from "../pixelGuess";
 import { emojiMovie } from "../emojiMovie";
 import { flagMaster } from "../flagMaster";
-import { soundtrackTrivia } from "../soundtrackTrivia";
+import { geekCharacter } from "../geekCharacter";
 
 /**
  * Registry central de módulos de jogo.
@@ -24,7 +24,7 @@ const modules: Partial<Record<GameId, AnyGameModule>> = {
   "pixel-guess": pixelGuess,
   "emoji-movie": emojiMovie,
   "flag-master": flagMaster,
-  "soundtrack-trivia": soundtrackTrivia,
+  "geek-character": geekCharacter,
 };
 
 /** Metadados dos 10 jogos (todos jogáveis). */
@@ -38,7 +38,7 @@ export const GAME_CATALOG: readonly GameMeta[] = [
   pixelGuess.meta,
   emojiMovie.meta,
   flagMaster.meta,
-  soundtrackTrivia.meta,
+  geekCharacter.meta,
 ];
 
 export function getGameModule(id: GameId): AnyGameModule | undefined {

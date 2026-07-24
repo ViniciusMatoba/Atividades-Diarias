@@ -23,7 +23,7 @@ export type GameId =
   | "pixel-guess"
   | "emoji-movie"
   | "flag-master"
-  | "soundtrack-trivia";
+  | "geek-character";
 
 export type GameTheme = "geo" | "pokemon" | "anime" | "movies" | "geek" | "music";
 

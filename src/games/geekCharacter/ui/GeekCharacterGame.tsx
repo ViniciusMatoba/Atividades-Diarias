@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Music, Check, X, RotateCcw, Volume2, Sparkles } from "lucide-react";
+import { UserCheck, Check, X, RotateCcw, Sparkles, Shield, Calendar, Sparkle } from "lucide-react";
 import { submitGuess } from "@/server/actions/game";
-import type { SoundtrackPublic, SoundtrackState } from "@/games/soundtrackTrivia";
+import type { GeekCharacterPublic, GeekCharacterState } from "@/games/geekCharacter";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StarRating } from "@/components/ui/StarRating";
@@ -16,16 +16,16 @@ import { usePersistedGameState } from "@/lib/usePersistedGameState";
 
 interface Props {
   dateKey: string;
-  initialPublic: SoundtrackPublic;
-  initialState: SoundtrackState;
+  initialPublic: GeekCharacterPublic;
+  initialState: GeekCharacterState;
   mode: "daily" | "infinite";
 }
 
-export function SoundtrackTriviaGame({ dateKey, initialPublic, initialState, mode }: Props) {
+export function GeekCharacterGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const { pub, state, updateGame, resetGame } = usePersistedGameState<SoundtrackPublic, SoundtrackState>(
+  const { pub, state, updateGame, resetGame } = usePersistedGameState<GeekCharacterPublic, GeekCharacterState>(
     dateKey,
-    "soundtrack-trivia",
+    "geek-character",
     initialPublic,
     initialState,
   );
@@ -34,9 +34,9 @@ export function SoundtrackTriviaGame({ dateKey, initialPublic, initialState, mod
   const [error, setError] = useState<string | null>(null);
 
   const guessedIds = new Set(pub.guesses.map((g) => g.id));
-  const options = pub.franchiseList
-    .filter((f) => !guessedIds.has(f.id))
-    .map((f) => ({ id: f.id, label: f.name }));
+  const options = pub.characterList
+    .filter((c) => !guessedIds.has(c.id))
+    .map((c) => ({ id: c.id, label: c.name }));
 
   const attempts = pub.guesses.length;
   const finalScore = pub.solved ? Math.round(1000 * (1 - (attempts - 1) / 5)) : 0;
@@ -47,10 +47,10 @@ export function SoundtrackTriviaGame({ dateKey, initialPublic, initialState, mod
     setError(null);
     const idToken = isFirebaseClientConfigured ? await getIdToken() : null;
     const res = await submitGuess({
-      gameId: "soundtrack-trivia",
+      gameId: "geek-character",
       dateKey,
       state,
-      guess: { franchiseId: selected },
+      guess: { characterId: selected },
       mode,
       ...(idToken ? { idToken } : {}),
     });
@@ -59,7 +59,7 @@ export function SoundtrackTriviaGame({ dateKey, initialPublic, initialState, mod
       setError(res.error ?? "Erro ao enviar palpite.");
       return;
     }
-    updateGame(res.public as SoundtrackPublic, res.state as SoundtrackState);
+    updateGame(res.public as GeekCharacterPublic, res.state as GeekCharacterState);
     setSelected("");
     if (res.recordedOfficial) void refresh();
   }
@@ -74,28 +74,37 @@ export function SoundtrackTriviaGame({ dateKey, initialPublic, initialState, mod
     <div className="space-y-4">
       <header className="flex items-center justify-between rounded-2xl gd-glass p-3.5 border gd-border shadow-md">
         <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-cyan-500 text-slate-950 font-black shadow-md">
-            <Music size={22} aria-hidden />
+          <div className="flex size-11 items-center justify-center rounded-xl bg-violet-600 text-white font-black shadow-md">
+            <UserCheck size={22} aria-hidden />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold tracking-tight gd-text">Trilha Geek</h1>
-            <p className="text-xs gd-muted">De qual obra é esta trilha sonora?</p>
+            <h1 className="text-xl font-extrabold tracking-tight gd-text">Quem é o Personagem?</h1>
+            <p className="text-xs gd-muted">Adivinhe o ícone da cultura pop pelas pistas</p>
           </div>
         </div>
         <div className="rounded-xl border gd-border gd-surface-2 px-3 py-1.5 text-center">
           <span className="block text-[10px] uppercase font-bold gd-muted">Tentativas</span>
-          <span className="text-base font-black text-cyan-400">{pub.guessesRemaining}</span>
+          <span className="text-base font-black text-violet-400">{pub.guessesRemaining}</span>
         </div>
       </header>
 
-      {/* Card da Waveform e Dicas */}
-      <div className="relative rounded-2xl border gd-border bg-gradient-to-br from-slate-950 via-cyan-950/30 to-slate-900 p-6 text-center shadow-xl">
-        <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-lg animate-pulse">
-          <Volume2 size={32} />
+      {/* Card das Pistas e Atributos */}
+      <div className="relative rounded-2xl border gd-border bg-gradient-to-br from-slate-950 via-violet-950/40 to-slate-900 p-6 text-center shadow-xl">
+        <div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/40 shadow-lg">
+          <UserCheck size={32} />
         </div>
-        <p className="text-sm font-bold text-white">Compositor: {pub.composer}</p>
-        <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-bold text-cyan-300">
-          <Sparkles size={14} /> Mídia: {pub.type} · Dica: {pub.hint}
+
+        <div className="grid grid-cols-2 gap-2 text-xs font-bold my-3">
+          <div className="rounded-xl bg-white/5 border border-white/10 p-2.5 flex items-center justify-center gap-1.5 text-violet-200">
+            <Shield size={14} className="text-violet-400" /> {pub.franchise}
+          </div>
+          <div className="rounded-xl bg-white/5 border border-white/10 p-2.5 flex items-center justify-center gap-1.5 text-violet-200">
+            <Sparkle size={14} className="text-violet-400" /> {pub.role}
+          </div>
+        </div>
+
+        <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-bold text-violet-300">
+          <Sparkles size={14} /> Dica: {pub.hint} (<Calendar size={12} className="inline ml-1" /> Década de {pub.decade})
         </div>
       </div>
 
@@ -123,22 +132,23 @@ export function SoundtrackTriviaGame({ dateKey, initialPublic, initialState, mod
             options={options}
             value={selected}
             onChange={setSelected}
-            placeholder="Digite o nome da franquia ou filme…"
+            placeholder="Digite o nome do personagem…"
             disabled={busy}
           />
           <Button onClick={onGuess} disabled={!selected || busy} size="lg" className="w-full font-bold shadow-md">
-            {busy ? "Enviando…" : "Confirmar Obra"}
+            {busy ? "Enviando…" : "Confirmar Personagem"}
           </Button>
         </div>
       ) : (
         pub.answer && (
-          <Card className="gd-bounce-in space-y-4 border-2 border-cyan-500/50 p-5 text-center shadow-xl">
+          <Card className="gd-bounce-in space-y-4 border-2 border-violet-500/50 p-5 text-center shadow-xl">
             <div className="flex flex-col items-center gap-1">
-              <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-bold text-cyan-400">
-                {pub.solved ? "🎉 Trilha Identificada!" : "🎮 Fim de Jogo"}
+              <span className="rounded-full bg-violet-500/20 px-3 py-1 text-xs font-bold text-violet-400">
+                {pub.solved ? "🎉 Personagem Revelado!" : "🎮 Fim de Jogo"}
               </span>
-              <h2 className="text-2xl font-black gd-text">{pub.answer.franchise}</h2>
-              <p className="text-xs gd-muted">Música: {pub.answer.title} ({pub.answer.composer})</p>
+              <h2 className="text-3xl font-black gd-text">{pub.answer.name}</h2>
+              <p className="text-xs gd-muted">{pub.answer.franchise} · {pub.answer.role}</p>
+              <p className="text-xs text-violet-300 font-bold mt-1">Item: {pub.answer.signatureItem}</p>
             </div>
 
             <div className="flex flex-col items-center gap-1.5 pt-2">
