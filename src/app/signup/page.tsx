@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Gamepad2 } from "lucide-react";
+import { Gamepad2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { signupSchema } from "@/lib/validation";
@@ -63,8 +63,16 @@ export default function SignupPage() {
       <form onSubmit={onSubmit} className="space-y-3" noValidate>
         <Input label="Nome de usuário" name="username" autoComplete="username" required />
         <Input label="E-mail" name="email" type="email" autoComplete="email" required />
-        <Input label="Senha" name="password" type="password" autoComplete="new-password" required />
-        {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
+        <div>
+          <Input label="Senha" name="password" type="password" autoComplete="new-password" required />
+          <p className="mt-1 text-xs gd-muted">Mínimo de 6 caracteres (aceita letras, números e caracteres especiais).</p>
+        </div>
+        {error && (
+          <div className="flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 p-3.5 text-sm text-[var(--color-danger)]">
+            <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden />
+            <span>{error}</span>
+          </div>
+        )}
         <Button type="submit" size="lg" className="w-full" disabled={busy}>
           {busy ? "Cadastrando…" : "Cadastrar"}
         </Button>
