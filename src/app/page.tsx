@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Flame, Trophy, Infinity as InfinityIcon, ArrowRight, LogIn } from "lucide-react";
 import { GAME_CATALOG, isPlayable } from "@/games/core/registry";
@@ -28,7 +30,17 @@ function greeting(): string {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const { user, profile, todayResults, loading } = useAuthCtx();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      const isGuest = typeof window !== "undefined" && sessionStorage.getItem("guest_mode") === "true";
+      if (!isGuest) {
+        router.replace("/login");
+      }
+    }
+  }, [loading, user, router]);
 
   if (loading) return <LoadingState label="Carregando seu dia…" />;
 

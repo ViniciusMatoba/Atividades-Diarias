@@ -63,10 +63,23 @@ export default function LoginPage() {
 
       <p className="text-center text-sm gd-muted">
         Não tem conta?{" "}
-        <Link href="/signup" className="text-[var(--color-primary)]">
+        <Link href="/signup" className="text-[var(--color-primary)] font-semibold">
           Cadastre-se
         </Link>
       </p>
+
+      <div className="pt-2 text-center">
+        <button
+          type="button"
+          onClick={() => {
+            sessionStorage.setItem("guest_mode", "true");
+            router.push("/");
+          }}
+          className="text-xs gd-muted hover:text-[var(--color-primary)] transition-colors"
+        >
+          Continuar como Visitante (sem salvar progresso)
+        </button>
+      </div>
     </div>
   );
 }
