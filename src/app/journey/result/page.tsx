@@ -12,8 +12,16 @@ import { Button } from "@/components/ui/Button";
 import { GameIcon } from "@/components/GameIcon";
 import { LoadingState } from "@/components/ui/States";
 
+import { useState } from "react";
+import { ShareStoryModal } from "@/components/ShareStoryModal";
+import { effectiveCurrentStreak } from "@/lib/streak";
+import { getDailyKey } from "@/lib/dailyKey";
+import { Instagram } from "lucide-react";
+
 export default function DailyResultPage() {
-  const { todayResults, loading } = useAuthCtx();
+  const { user, profile, todayResults, loading } = useAuthCtx();
+  const [isShareOpen, setIsShareOpen] = useState(false);
+
   if (loading) return <LoadingState label="Carregando resultado…" />;
 
   const resultByGame = new Map(todayResults.map((r) => [r.gameId, r]));
@@ -21,6 +29,21 @@ export default function DailyResultPage() {
   const dayScore = todayResults.reduce((acc, r) => acc + r.score, 0);
   const countsForStreak = journeyCountsForStreak(completed);
   const overallStars: StarValue = scoreToStars(Math.round(dayScore / DAILY_GAME_COUNT));
+
+  const dateKey = getDailyKey();
+  const dateLabel = new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "long",
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date());
+
+  const streak = profile
+    ? effectiveCurrentStreak(
+        { current: profile.currentStreak, longest: profile.longestStreak, lastCompletedKey: profile.lastCompletedKey },
+        dateKey,
+      )
+    : 0;
+  const displayName = profile?.username ?? user?.displayName ?? "Visitante";
 
   return (
     <div className="space-y-4">
@@ -39,12 +62,21 @@ export default function DailyResultPage() {
           <StarRating value={overallStars} size={26} />
         </div>
         {countsForStreak ? (
-          <p className="mt-2 text-sm text-[var(--color-success)]">Streak mantido! 🔥</p>
+          <p className="mt-2 text-sm text-[var(--color-success)] font-semibold">Streak mantido! 🔥</p>
         ) : (
           <p className="mt-2 text-xs gd-muted">
             Conclua ao menos 3 jogos para manter o streak ({completed}/{DAILY_GAME_COUNT}).
           </p>
         )}
+
+        <div className="mt-4 pt-3 border-t gd-border">
+          <Button
+            onClick={() => setIsShareOpen(true)}
+            className="w-full font-bold shadow-md bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white"
+          >
+            <Instagram size={18} /> Compartilhar no Instagram Stories
+          </Button>
+        </div>
       </Card>
 
       <ul className="space-y-2">
@@ -71,8 +103,17 @@ export default function DailyResultPage() {
       </ul>
 
       <Link href="/journey">
-        <Button className="w-full">Voltar à jornada</Button>
+        <Button variant="secondary" className="w-full font-bold">Voltar à jornada</Button>
       </Link>
+
+      <ShareStoryModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        username={displayName}
+        streak={streak}
+        dateLabel={dateLabel}
+        todayResults={todayResults}
+      />
     </div>
   );
 }

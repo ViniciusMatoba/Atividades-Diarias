@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Flame, Trophy, Infinity as InfinityIcon, ArrowRight, LogIn } from "lucide-react";
+import { Flame, Trophy, Infinity as InfinityIcon, ArrowRight, LogIn, Share2 } from "lucide-react";
+import { LoginView } from "@/components/LoginView";
+import { ShareStoryModal } from "@/components/ShareStoryModal";
 import { GAME_CATALOG, isPlayable } from "@/games/core/registry";
 import { getDailyKey } from "@/lib/dailyKey";
 import { DAILY_GAME_COUNT, MAX_DAILY_SCORE } from "@/lib/scoring";
@@ -27,11 +30,9 @@ function greeting(): string {
   return "Boa noite";
 }
 
-import { useState } from "react";
-import { LoginView } from "@/components/LoginView";
-
 export default function HomePage() {
   const { user, profile, todayResults, loading } = useAuthCtx();
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [isGuest, setIsGuest] = useState(() => {
     return typeof window !== "undefined" && sessionStorage.getItem("guest_mode") === "true";
   });
@@ -99,11 +100,11 @@ export default function HomePage() {
         </Link>
       )}
 
-      <Card className="gd-pop bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-strong)] text-white">
+      <Card className="gd-pop bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-strong)] text-white shadow-xl">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm/5 opacity-90">Pontuação de hoje</p>
-            <p className="text-3xl font-extrabold">
+            <p className="text-sm/5 opacity-90 font-medium">Pontuação de hoje</p>
+            <p className="text-3xl font-black">
               {dayScore}
               <span className="text-base font-medium opacity-70"> / {MAX_DAILY_SCORE}</span>
             </p>
@@ -113,7 +114,27 @@ export default function HomePage() {
         <div className="mt-3">
           <ProgressBar value={completed / DAILY_GAME_COUNT} label={`${completed}/${DAILY_GAME_COUNT} jogos`} />
         </div>
+
+        {completed > 0 && (
+          <div className="mt-3 pt-3 border-t border-white/20">
+            <button
+              onClick={() => setIsShareOpen(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white/20 hover:bg-white/30 py-2 px-3 text-xs font-bold text-white transition-all shadow-sm active:scale-95"
+            >
+              <Share2 size={14} /> Compartilhar Resultado no Instagram Stories
+            </button>
+          </div>
+        )}
       </Card>
+
+      <ShareStoryModal
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        username={displayName}
+        streak={streak}
+        dateLabel={dateLabel}
+        todayResults={todayResults}
+      />
 
       <section>
         <div className="mb-2 flex items-center justify-between">
