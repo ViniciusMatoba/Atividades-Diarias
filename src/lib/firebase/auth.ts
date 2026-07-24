@@ -46,12 +46,16 @@ export async function getIdToken(): Promise<string | null> {
 
 /** Traduz os códigos de erro mais comuns do Firebase Auth para pt-BR. */
 export function mapAuthError(message: string): string {
-  if (message.includes("email-already-in-use")) return "Este e-mail já está em uso.";
-  if (message.includes("invalid-email")) return "E-mail inválido.";
-  if (message.includes("weak-password")) return "Senha muito fraca (mín. 6 caracteres).";
-  if (message.includes("invalid-credential") || message.includes("wrong-password"))
-    return "E-mail ou senha incorretos.";
-  if (message.includes("user-not-found")) return "Conta não encontrada.";
-  if (message.includes("too-many-requests")) return "Muitas tentativas. Tente mais tarde.";
-  return "Não foi possível concluir. Tente novamente.";
+  if (message.includes("email-already-in-use")) return "Este e-mail já está em uso por outro usuário.";
+  if (message.includes("invalid-email")) return "Endereço de e-mail inválido.";
+  if (message.includes("weak-password")) return "A senha deve ter no mínimo 6 caracteres.";
+  if (
+    message.includes("invalid-credential") ||
+    message.includes("user-not-found") ||
+    message.includes("wrong-password")
+  ) {
+    return "Conta não encontrada ou senha incorreta. Se você ainda não possui conta, clique em 'Cadastre-se' abaixo.";
+  }
+  if (message.includes("too-many-requests")) return "Muitas tentativas malsucedidas. Aguarde alguns instantes e tente novamente.";
+  return "Não foi possível concluir o acesso. Verifique seus dados e tente novamente.";
 }

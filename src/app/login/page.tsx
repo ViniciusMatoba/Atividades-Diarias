@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Gamepad2 } from "lucide-react";
+import { Gamepad2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { loginSchema } from "@/lib/validation";
-import { isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { mapAuthError, signIn } from "@/lib/firebase/auth";
 
 export default function LoginPage() {
@@ -24,12 +23,6 @@ export default function LoginPage() {
       return;
     }
     setError(null);
-
-    // Sem credenciais Firebase ainda: segue em modo demo.
-    if (!isFirebaseClientConfigured) {
-      router.push("/");
-      return;
-    }
 
     setBusy(true);
     try {
@@ -55,7 +48,12 @@ export default function LoginPage() {
       <form onSubmit={onSubmit} className="space-y-3" noValidate>
         <Input label="E-mail" name="email" type="email" autoComplete="email" required />
         <Input label="Senha" name="password" type="password" autoComplete="current-password" required />
-        {error && <p className="text-sm text-[var(--color-danger)]">{error}</p>}
+        {error && (
+          <div className="flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 p-3.5 text-sm text-[var(--color-danger)]">
+            <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden />
+            <span>{error}</span>
+          </div>
+        )}
         <Button type="submit" size="lg" className="w-full" disabled={busy}>
           {busy ? "Entrando…" : "Entrar"}
         </Button>

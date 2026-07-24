@@ -7,12 +7,12 @@ import { getFirestore, type Firestore } from "firebase/firestore";
  * Auth é usada no cliente; escritas privilegiadas passam pelo servidor (admin).
  */
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyD1dnb1KP42_CC6pz2KwGJpXX_onTFRVAs",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "atividades-diarias-55f5d.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "atividades-diarias-55f5d",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "atividades-diarias-55f5d.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "966760327202",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:966760327202:web:317cacb8c5d7f7993f027b",
 };
 
 /** True quando as variáveis mínimas do cliente estão presentes. */
