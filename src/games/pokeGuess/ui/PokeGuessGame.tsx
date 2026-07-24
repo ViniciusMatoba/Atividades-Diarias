@@ -12,6 +12,7 @@ import { isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { getIdToken } from "@/lib/firebase/auth";
 import { useAuthCtx } from "@/lib/firebase/AuthProvider";
 import { PokedexCard, TypeBadge } from "@/components/PokedexCard";
+import { AutocompleteInput } from "@/components/ui/AutocompleteInput";
 import { getPokemonArtworkUrl } from "@/games/pokeGuess/data/pokemon";
 import { usePersistedGameState } from "@/lib/usePersistedGameState";
 
@@ -178,22 +179,19 @@ export function PokeGuessGame({ dateKey, initialPublic, initialState, mode }: Pr
 
       {!pub.finished ? (
         <div className="space-y-3 rounded-2xl border gd-border gd-surface p-4 shadow-md">
-          <label htmlFor="poke-select" className="block text-sm font-bold gd-text">
-            Escolha o seu palpite:
+          <label className="block text-sm font-bold gd-text">
+            Digite o nome do Pokémon:
           </label>
-          <select
-            id="poke-select"
+          <AutocompleteInput
+            options={options.map((p) => ({
+              id: p.id,
+              label: p.name,
+              sublabel: `#${String(p.pokedexId).padStart(3, "0")} · Gen ${p.generation}`,
+            }))}
             value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="h-12 w-full rounded-xl border gd-border gd-surface-2 px-3.5 text-sm font-semibold gd-text outline-none transition-all focus-visible:ring-2 focus-visible:ring-[var(--color-pokemon)]"
-          >
-            <option value="">Selecione um Pokémon ({options.length} disponíveis)…</option>
-            {options.map((p) => (
-              <option key={p.id} value={p.id}>
-                #{String(p.pokedexId).padStart(3, "0")} {p.name} (Gen {p.generation})
-              </option>
-            ))}
-          </select>
+            onChange={(id) => setSelected(id)}
+            placeholder="Digite para buscar Pokémon (ex: Pikachu, Charizard...)"
+          />
           <Button onClick={onGuess} disabled={!selected || busy} size="lg" className="w-full font-bold shadow-md">
             {busy ? "Enviando palpite…" : "Confirmar Palpite"}
           </Button>

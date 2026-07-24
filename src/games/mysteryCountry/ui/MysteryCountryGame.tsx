@@ -8,6 +8,7 @@ import { getFlagUrl } from "@/games/mysteryCountry/data/countries";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StarRating } from "@/components/ui/StarRating";
+import { AutocompleteInput } from "@/components/ui/AutocompleteInput";
 import { scoreToStars } from "@/lib/stars";
 import { isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { getIdToken } from "@/lib/firebase/auth";
@@ -157,23 +158,19 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
 
       {/* Área de ação */}
       {!pub.finished ? (
-        <div className="space-y-3 rounded-2xl border gd-border gd-surface p-4">
-          <label htmlFor="country-select" className="block text-sm font-bold gd-text">
-            Seu palpite de país:
+        <div className="space-y-3 rounded-2xl border gd-border gd-surface p-4 shadow-md">
+          <label className="block text-sm font-bold gd-text">
+            Digite o nome do país:
           </label>
-          <select
-            id="country-select"
+          <AutocompleteInput
+            options={options.map((c) => ({
+              id: c.id,
+              label: c.name,
+            }))}
             value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="h-12 w-full rounded-xl border gd-border gd-surface-2 px-3.5 text-sm font-semibold gd-text outline-none transition-all focus-visible:ring-2 focus-visible:ring-[var(--color-geo)]"
-          >
-            <option value="">Escolha um país ({options.length} disponíveis)…</option>
-            {options.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            onChange={(id) => setSelected(id)}
+            placeholder="Digite para buscar um país (ex: Brasil, Japão, França...)"
+          />
           <Button onClick={onGuess} disabled={!selected || busy} size="lg" className="w-full font-bold shadow-md">
             {busy ? "Validando palpite…" : "Confirmar Palpite"}
           </Button>
