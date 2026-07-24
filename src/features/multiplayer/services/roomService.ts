@@ -3,11 +3,13 @@ import { getDb, isFirebaseClientConfigured } from "@/lib/firebase/client";
 import {
   IMPOSTOR_WORDS_CATALOG,
   HERD_PROMPTS_CATALOG,
+  DRAW_WORDS_CATALOG,
   type ImpostorRoom,
   type MultiplayerPlayer,
   type PlayerHint,
   type PlayerVote,
   type PlayerHerdAnswer,
+  type ChatMessage,
   type GameMode,
 } from "../types";
 
@@ -172,10 +174,133 @@ export async function setRoomGameMode(roomId: string, gameMode: GameMode): Promi
   }
 }
 
+export async function updateRoomCanvasData(roomId: string, canvasData: string): Promise<void> {
+  const code = roomId.toUpperCase().trim();
+  const room = getRoomFromLocalStorage(code);
+  if (!room) return;
+
+  const updatedRoom = { ...room, canvasData };
+  saveRoomToLocalStorage(updatedRoom);
+
+  if (isFirebaseClientConfigured) {
+    try {
+      const db = getDb();
+      await updateDoc(doc(db, "multiplayerRooms", code), { canvasData });
+    } catch {
+      // fallback
+    }
+  }
+}
+
+export async function submitDrawChatGuess(roomId: string, message: { playerId: string; playerName: string; text: string }): Promise<void> {
+  const code = roomId.toUpperCase().trim();
+  const room = getRoomFromLocalStorage(code);
+  if (!room || !room.drawWord) return;
+
+  const normGuess = message.text.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normTarget = room.drawWord.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const isCorrect = normGuess === normTarget;
+  const newMsg: ChatMessage = {
+    id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    playerId: message.playerId,
+    playerName: message.playerName,
+    text: message.text,
+    isCorrect,
+    timestamp: Date.now(),
+  };
+
+  const currentMsgs = room.chatMessages ?? [];
+  const updatedMsgs = [...currentMsgs, newMsg];
+  let correctGuessers = room.correctGuessers ?? [];
+  let updatedPlayers = room.players;
+  let newStatus = room.status;
+
+  if (isCorrect && !correctGuessers.includes(message.playerId)) {
+    correctGuessers = [...correctGuessers, message.playerId];
+    
+    // Premia +500 pts para quem acertou e +200 pts para quem desenhou
+    updatedPlayers = room.players.map((p) => {
+      if (p.id === message.playerId) return { ...p, score: p.score + 500 };
+      if (p.id === room.drawerId) return { ...p, score: p.score + 200 };
+      return p;
+    });
+
+    // Se todos os adivinhadores acertaram, finaliza a rodada
+    const totalGuessers = room.players.length - 1;
+    if (correctGuessers.length >= totalGuessers) {
+      newStatus = "result";
+    }
+  }
+
+  const updatedRoom: ImpostorRoom = {
+    ...room,
+    chatMessages: updatedMsgs,
+    correctGuessers,
+    players: updatedPlayers,
+    status: newStatus,
+    winner: newStatus === "result" ? "draw_finished" : undefined,
+  };
+
+  saveRoomToLocalStorage(updatedRoom);
+
+  if (isFirebaseClientConfigured) {
+    try {
+      const db = getDb();
+      await updateDoc(doc(db, "multiplayerRooms", code), {
+        chatMessages: updatedMsgs,
+        correctGuessers,
+        players: updatedPlayers,
+        status: newStatus,
+        winner: newStatus === "result" ? "draw_finished" : undefined,
+      });
+    } catch {
+      // fallback
+    }
+  }
+}
+
 export async function startNewRound(roomId: string): Promise<void> {
   const code = roomId.toUpperCase().trim();
   const room = getRoomFromLocalStorage(code);
   if (!room || room.players.length === 0) return;
+
+  if (room.gameMode === "draw") {
+    const drawWord = DRAW_WORDS_CATALOG[Math.floor(Math.random() * DRAW_WORDS_CATALOG.length)]!;
+    // Alterna o desenhista para o próximo jogador
+    const currentDrawerIdx = room.players.findIndex((p) => p.id === room.drawerId);
+    const nextDrawer = room.players[(currentDrawerIdx + 1) % room.players.length]!;
+
+    const updatedRoom: ImpostorRoom = {
+      ...room,
+      status: "hints",
+      drawerId: nextDrawer.id,
+      drawWord,
+      canvasData: "",
+      chatMessages: [],
+      correctGuessers: [],
+      winner: undefined,
+    };
+    saveRoomToLocalStorage(updatedRoom);
+
+    if (isFirebaseClientConfigured) {
+      try {
+        const db = getDb();
+        await updateDoc(doc(db, "multiplayerRooms", code), {
+          status: "hints",
+          drawerId: nextDrawer.id,
+          drawWord,
+          canvasData: "",
+          chatMessages: [],
+          correctGuessers: [],
+          winner: undefined,
+        });
+      } catch {
+        // fallback
+      }
+    }
+    return;
+  }
 
   if (room.gameMode === "herd") {
     const prompt = HERD_PROMPTS_CATALOG[Math.floor(Math.random() * HERD_PROMPTS_CATALOG.length)]!;

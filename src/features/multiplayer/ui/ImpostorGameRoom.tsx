@@ -16,6 +16,7 @@ import {
   Shield,
   UserX,
   Brain,
+  Paintbrush,
 } from "lucide-react";
 import type { ImpostorRoom, MultiplayerPlayer, GameMode } from "../types";
 import {
@@ -25,7 +26,10 @@ import {
   submitPlayerVote,
   submitHerdAnswer,
   setRoomGameMode,
+  updateRoomCanvasData,
+  submitDrawChatGuess,
 } from "../services/roomService";
+import { CanvasDrawer } from "./CanvasDrawer";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
@@ -41,6 +45,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
   const [showSecret, setShowSecret] = useState(false);
   const [hintInput, setHintInput] = useState("");
   const [herdInput, setHerdInput] = useState("");
+  const [drawChatInput, setDrawChatInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [selectedVoteId, setSelectedVoteId] = useState("");
 
@@ -54,6 +59,8 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
   const isHost = currentPlayer.id === room.hostId;
   const isImpostor = currentPlayer.id === room.impostorId;
   const isHerdMode = room.gameMode === "herd";
+  const isDrawMode = room.gameMode === "draw";
+  const isDrawer = currentPlayer.id === room.drawerId;
 
   const myHint = room.hints.find((h) => h.playerId === currentPlayer.id);
   const myHerdAns = (room.herdAnswers ?? []).find((a) => a.playerId === currentPlayer.id);
@@ -82,6 +89,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
     setShowSecret(false);
     setHintInput("");
     setHerdInput("");
+    setDrawChatInput("");
     setSelectedVoteId("");
   }
 
@@ -109,6 +117,18 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
     setBusy(false);
   }
 
+  async function handleSendDrawGuess() {
+    if (!drawChatInput.trim() || busy) return;
+    setBusy(true);
+    await submitDrawChatGuess(room.id, {
+      playerId: currentPlayer.id,
+      playerName: currentPlayer.name,
+      text: drawChatInput.trim(),
+    });
+    setDrawChatInput("");
+    setBusy(false);
+  }
+
   async function handleSendVote() {
     if (!selectedVoteId || busy) return;
     setBusy(true);
@@ -125,7 +145,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
       <header className="flex items-center justify-between rounded-2xl gd-glass p-4 border gd-border shadow-md">
         <div>
           <span className="block text-[10px] uppercase font-black tracking-wider text-purple-400">
-            {isHerdMode ? "🧠 Mente Coletiva" : "🕵️‍♂️ Impostor Geek"}
+            {isDrawMode ? "🎨 Desenho e Adivinhação" : isHerdMode ? "🧠 Mente Coletiva" : "🕵️‍♂️ Impostor Geek"}
           </span>
           <h1 className="text-2xl font-black gd-text tracking-widest flex items-center gap-2">
             {room.id}
@@ -147,7 +167,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
         <Card className="p-6 text-center space-y-6 border-purple-500/30">
           <div className="space-y-2">
             <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-purple-500/20 text-purple-400 border border-purple-500/40 shadow-lg">
-              {isHerdMode ? <Brain size={32} /> : <Users size={32} />}
+              {isDrawMode ? <Paintbrush size={32} /> : isHerdMode ? <Brain size={32} /> : <Users size={32} />}
             </div>
             <h2 className="text-2xl font-black gd-text">Aguardando Amigos</h2>
             <p className="text-xs gd-muted">
@@ -160,34 +180,48 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
             <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
               Modo de Jogo Escolhido
             </span>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 disabled={!isHost}
                 onClick={() => handleToggleMode("impostor")}
-                className={`p-3 rounded-xl border text-left font-bold text-xs transition-all ${
-                  !isHerdMode
+                className={`p-2.5 rounded-xl border text-left font-bold text-[11px] transition-all ${
+                  room.gameMode === "impostor"
                     ? "border-purple-500 bg-purple-500/20 text-white shadow-md"
                     : "gd-border gd-surface gd-muted opacity-70"
                 }`}
               >
-                <div className="flex items-center gap-1.5 mb-1 font-black text-purple-300">
-                  <UserX size={14} /> Impostor Geek
+                <div className="flex items-center gap-1 mb-1 font-black text-purple-300">
+                  <UserX size={13} /> Impostor
                 </div>
-                Descubra quem não sabe a palavra secreta!
+                Descubra o impostor!
               </button>
               <button
                 disabled={!isHost}
                 onClick={() => handleToggleMode("herd")}
-                className={`p-3 rounded-xl border text-left font-bold text-xs transition-all ${
-                  isHerdMode
+                className={`p-2.5 rounded-xl border text-left font-bold text-[11px] transition-all ${
+                  room.gameMode === "herd"
                     ? "border-purple-500 bg-purple-500/20 text-white shadow-md"
                     : "gd-border gd-surface gd-muted opacity-70"
                 }`}
               >
-                <div className="flex items-center gap-1.5 mb-1 font-black text-purple-300">
-                  <Brain size={14} /> Mente Coletiva
+                <div className="flex items-center gap-1 mb-1 font-black text-purple-300">
+                  <Brain size={13} /> Mente Coletiva
                 </div>
-                Responda igual à maioria da sala para vencer!
+                Vote na maioria!
+              </button>
+              <button
+                disabled={!isHost}
+                onClick={() => handleToggleMode("draw")}
+                className={`p-2.5 rounded-xl border text-left font-bold text-[11px] transition-all ${
+                  room.gameMode === "draw"
+                    ? "border-purple-500 bg-purple-500/20 text-white shadow-md"
+                    : "gd-border gd-surface gd-muted opacity-70"
+                }`}
+              >
+                <div className="flex items-center gap-1 mb-1 font-black text-purple-300">
+                  <Paintbrush size={13} /> Desenho
+                </div>
+                Desenhe e adivinhe!
               </button>
             </div>
           </div>
@@ -223,7 +257,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
               size="lg"
               className="w-full font-bold shadow-lg"
             >
-              <Play size={18} /> Iniciar Rodada ({isHerdMode ? "Mente Coletiva" : "Impostor Geek"})
+              <Play size={18} /> Iniciar Rodada ({room.gameMode === "draw" ? "Desenho" : room.gameMode === "herd" ? "Mente Coletiva" : "Impostor"})
             </Button>
           ) : (
             <p className="text-xs font-bold text-purple-300 animate-pulse">
@@ -231,6 +265,85 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
             </p>
           )}
         </Card>
+      )}
+
+      {/* TELA DA RODADA DE DESENHO E ADIVINHAÇÃO */}
+      {isDrawMode && room.status === "hints" && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-purple-500/50 bg-gradient-to-br from-slate-950 via-purple-950/40 to-slate-900 p-4 text-center shadow-xl">
+            {isDrawer ? (
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-purple-300">
+                  🎨 VOCÊ É O DESENHISTA!
+                </span>
+                <h3 className="text-2xl font-black text-white tracking-widest">
+                  &quot;{room.drawWord}&quot;
+                </h3>
+                <p className="text-xs text-purple-300/80">Desenhe na lousa abaixo para os amigos adivinharem!</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-purple-300">
+                  👀 ADIVINHE O DESENHO!
+                </span>
+                <h3 className="text-lg font-black text-purple-200">
+                  Desenhista: {room.players.find((p) => p.id === room.drawerId)?.name}
+                </h3>
+                <p className="text-xs text-purple-300/80">Assista ao vivo e envie seu palpite no chat!</p>
+              </div>
+            )}
+          </div>
+
+          {/* Lousa do Desenho */}
+          <CanvasDrawer
+            isDrawer={isDrawer}
+            canvasData={room.canvasData}
+            onCanvasChange={(dataUrl) => void updateRoomCanvasData(room.id, dataUrl)}
+          />
+
+          {/* Chat de Adivinhação */}
+          {!isDrawer && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={drawChatInput}
+                  onChange={(e) => setDrawChatInput(e.target.value)}
+                  placeholder="Digite seu palpite..."
+                  className="flex-1 rounded-xl border gd-border gd-surface px-3.5 py-2.5 text-sm font-bold gd-text focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <Button onClick={handleSendDrawGuess} disabled={!drawChatInput.trim() || busy}>
+                  <Send size={16} />
+                </Button>
+              </div>
+
+              <div className="max-h-40 overflow-y-auto space-y-1.5 rounded-xl border gd-border gd-surface p-3 text-xs font-bold">
+                {(room.chatMessages ?? []).length === 0 ? (
+                  <p className="text-center text-xs gd-muted py-2">Nenhum palpite enviado ainda...</p>
+                ) : (
+                  (room.chatMessages ?? [])
+                    .slice()
+                    .reverse()
+                    .map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`flex items-center justify-between rounded-lg p-2 ${
+                          msg.isCorrect
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            : "bg-white/5 text-purple-200"
+                        }`}
+                      >
+                        <span>
+                          <strong>{msg.playerName}:</strong> {msg.text}
+                        </span>
+                        {msg.isCorrect && <span className="font-black text-emerald-400">🎉 ACERTOU! (+500 pts)</span>}
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* TELA DA RODADA DE MENTE COLETIVA */}
@@ -296,7 +409,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
       )}
 
       {/* TELA DE DICAS DE IMPOSTOR GEEK */}
-      {!isHerdMode && room.status === "hints" && (
+      {!isHerdMode && !isDrawMode && room.status === "hints" && (
         <div className="space-y-4">
           <div
             className={`relative overflow-hidden rounded-2xl border p-6 text-center shadow-xl transition-all ${
@@ -391,7 +504,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
       )}
 
       {/* TELA DE VOTAÇÃO (APENAS IMPOSTOR GEEK) */}
-      {!isHerdMode && room.status === "voting" && (
+      {!isHerdMode && !isDrawMode && room.status === "voting" && (
         <Card className="p-6 space-y-6 text-center border-purple-500/40">
           <div className="space-y-1">
             <Vote size={32} className="mx-auto text-purple-400 mb-1" />
@@ -460,59 +573,24 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
           <div className="space-y-2">
             <Trophy size={48} className="mx-auto text-amber-400 animate-bounce" />
             <h2 className="text-3xl font-black gd-text">
-              {isHerdMode
+              {isDrawMode
+                ? "🎨 Fim da Rodada de Desenho!"
+                : isHerdMode
                 ? "🧠 Resposta do Rebanho!"
                 : room.winner === "players"
                 ? "🎉 Jogadores Venceram!"
                 : "🕵️‍♂️ Impostor Venceu!"}
             </h2>
             <p className="text-xs gd-muted">
-              {isHerdMode
+              {isDrawMode
+                ? `A palavra desenhada era: "${room.drawWord}"`
+                : isHerdMode
                 ? `A maioria respondeu: "${(room.majorityAnswers ?? []).join(" / ")}"`
                 : room.winner === "players"
                 ? "O grupo identificou o impostor com sucesso!"
                 : "O impostor conseguiu enganar a sala completa!"}
             </p>
           </div>
-
-          {/* Respostas da Mente Coletiva */}
-          {isHerdMode ? (
-            <div className="space-y-2 text-left">
-              <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
-                Respostas de Todos os Jogadores:
-              </span>
-              <div className="space-y-2">
-                {(room.herdAnswers ?? []).map((ans) => {
-                  const isMajority = (room.majorityAnswers ?? []).some(
-                    (m) => m.toLowerCase().trim() === ans.answerText.toLowerCase().trim()
-                  );
-                  return (
-                    <div
-                      key={ans.playerId}
-                      className={`flex items-center justify-between rounded-xl border p-3 font-bold text-sm ${
-                        isMajority
-                          ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-300"
-                          : "gd-border gd-surface gd-muted"
-                      }`}
-                    >
-                      <span>{ans.playerName}</span>
-                      <span className="font-extrabold">&quot;{ans.answerText}&quot; {isMajority ? "🏆 (+300 pts)" : ""}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border gd-border bg-black/40 p-4 space-y-2 text-center">
-              <span className="text-xs uppercase font-bold text-purple-300">Revelação da Rodada</span>
-              <p className="text-sm font-bold gd-text">
-                Palavra Secreta: <strong className="text-purple-300 font-extrabold">{room.secretWord}</strong>
-              </p>
-              <p className="text-sm font-bold text-rose-400">
-                Impostor Secreto: {room.players.find((p) => p.id === room.impostorId)?.name}
-              </p>
-            </div>
-          )}
 
           {/* Ranking Atualizado da Sala */}
           <div className="space-y-2 text-left">
@@ -539,7 +617,7 @@ export function ImpostorGameRoom({ initialRoom, currentPlayer, onLeave }: Props)
 
           {isHost && (
             <Button onClick={handleStartRound} disabled={busy} size="lg" className="w-full font-bold shadow-lg">
-              <RotateCcw size={18} /> Próxima Rodada ({isHerdMode ? "Mente Coletiva" : "Impostor Geek"})
+              <RotateCcw size={18} /> Próxima Rodada ({isDrawMode ? "Desenho" : isHerdMode ? "Mente Coletiva" : "Impostor"})
             </Button>
           )}
         </Card>

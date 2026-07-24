@@ -104,7 +104,24 @@ export const HERD_PROMPTS_CATALOG: readonly HerdPrompt[] = [
   { id: "16", category: "Bebidas", question: "Qual é a bebida perfeita em um dia de calor intenso?" },
 ];
 
-export type GameMode = "impostor" | "herd";
+export const DRAW_WORDS_CATALOG: readonly string[] = [
+  "Pizza", "Hambúrguer", "Sorvete", "Gato", "Cachorro", "Carro", "Avião", "Bicicleta",
+  "Guitarra", "Sol", "Praia", "Computador", "Celular", "Pipoca", "Churrasco", "Tubarão",
+  "Elefante", "Bolo de Aniversário", "Batman", "Pikachu", "Minecraft", "Super Mario",
+  "Espada", "Escudo", "Robô", "Futebol", "Tênis", "Casaco", "Relógio", "Óculos",
+  "Coração", "Estrela", "Lua", "Fogo", "Vulcão", "Castelo", "Pirata", "Árvore"
+];
+
+export interface ChatMessage {
+  id: string;
+  playerId: string;
+  playerName: string;
+  text: string;
+  isCorrect?: boolean;
+  timestamp: number;
+}
+
+export type GameMode = "impostor" | "herd" | "draw";
 export type RoomStatus = "lobby" | "hints" | "voting" | "result";
 
 export interface ImpostorRoom {
@@ -122,6 +139,11 @@ export interface ImpostorRoom {
   herdQuestion?: string;
   herdAnswers?: PlayerHerdAnswer[];
   majorityAnswers?: string[];
+  drawerId?: string;
+  drawWord?: string;
+  canvasData?: string;
+  chatMessages?: ChatMessage[];
+  correctGuessers?: string[];
   impostorFinalGuess?: string;
-  winner?: "players" | "impostor" | "herd_winners";
+  winner?: "players" | "impostor" | "herd_winners" | "draw_finished";
 }
