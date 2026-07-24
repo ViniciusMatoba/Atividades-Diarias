@@ -34,10 +34,11 @@ const CLUE_ICONS: Record<string, React.ReactNode> = {
   capital: <MapPin size={18} className="text-rose-400" />,
 };
 
+import { usePersistedGameState } from "@/lib/usePersistedGameState";
+
 export function MysteryCountryGame({ dateKey, countries, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const [pub, setPub] = useState(initialPublic);
-  const [state, setState] = useState(initialState);
+  const { pub, state, updateGame, resetGame } = usePersistedGameState(dateKey, "mystery-country", initialPublic, initialState);
   const [selected, setSelected] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,17 +66,15 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
       return;
     }
     const pubData = res.public as MysteryCountryPublic;
-    setPub(pubData);
-    setState(res.state as MysteryCountryState);
+    updateGame(pubData, res.state as MysteryCountryState);
     setSelected("");
     const lastGuess = pubData.guesses.at(-1);
     setLastMessage(lastGuess?.correct ? "Acertou! 🎉" : "Não é esse. Nova pista liberada!");
     if (res.recordedOfficial) void refresh();
   }
 
-  function reset() {
-    setPub(initialPublic);
-    setState(initialState);
+  function handleReset() {
+    resetGame();
     setSelected("");
     setError(null);
     setLastMessage(null);
@@ -229,7 +228,7 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
             </div>
           )}
 
-          <Button variant="secondary" onClick={reset} className="w-full font-bold">
+          <Button variant="secondary" onClick={handleReset} className="w-full font-bold">
             <RotateCcw size={18} aria-hidden /> Jogar de novo (modo treino)
           </Button>
         </Card>

@@ -12,6 +12,7 @@ import { scoreToStars } from "@/lib/stars";
 import { isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { getIdToken } from "@/lib/firebase/auth";
 import { useAuthCtx } from "@/lib/firebase/AuthProvider";
+import { usePersistedGameState } from "@/lib/usePersistedGameState";
 
 interface Props {
   dateKey: string;
@@ -50,7 +51,7 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
 export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
   const svgRef = useRef<SVGSVGElement>(null);
-  const [pub, setPub] = useState(initialPublic);
+  const { pub, state, updateGame, resetGame } = usePersistedGameState(dateKey, "world-pin", initialPublic, initialState);
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,22 +74,22 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
     const res = await submitGuess({
       gameId: "world-pin",
       dateKey,
-      state: initialState,
+      state,
       guess: pending,
       mode,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);
-    if (!res.ok || !res.public) {
-      setError(res.error ?? "Erro ao enviar.");
+    if (!res.ok || !res.public || !res.state) {
+      setError(res.error ?? "Erro ao enviar palpite.");
       return;
     }
-    setPub(res.public as WorldPinPublic);
+    updateGame(res.public as WorldPinPublic, res.state as WorldPinState);
     if (res.recordedOfficial) void refresh();
   }
 
   function reset() {
-    setPub(initialPublic);
+    resetGame();
     setPending(null);
     setError(null);
   }

@@ -25,14 +25,21 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   anime: <Tv size={16} className="text-pink-400" />,
 };
 
+import { usePersistedGameState } from "@/lib/usePersistedGameState";
+
 export function WhoCameFirstGame({ dateKey, initialPublic, mode }: Props) {
   const { refresh } = useAuthCtx();
+  const initialState = { order: initialPublic.items.map((i) => i.id), submitted: false, solved: false };
+  const { pub, state, updateGame, resetGame } = usePersistedGameState(dateKey, "who-came-first", initialPublic, initialState);
+  
   const itemMap = useMemo(
     () => new Map(initialPublic.items.map((i) => [i.id, i])),
     [initialPublic.items],
   );
-  const [order, setOrder] = useState<string[]>(initialPublic.items.map((i) => i.id));
-  const [pub, setPub] = useState<WhoCameFirstPublic>(initialPublic);
+  
+  const [order, setOrder] = useState<string[]>(() => {
+    return (state as WhoCameFirstState)?.order ?? initialPublic.items.map((i) => i.id);
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,26 +73,27 @@ export function WhoCameFirstGame({ dateKey, initialPublic, mode }: Props) {
     setBusy(true);
     setError(null);
     const idToken = isFirebaseClientConfigured ? await getIdToken() : null;
+    const newState = { order, submitted: true, solved: false } satisfies WhoCameFirstState;
     const res = await submitGuess({
       gameId: "who-came-first",
       dateKey,
-      state: { order, submitted: false, solved: false } satisfies WhoCameFirstState,
+      state: newState,
       guess: { order },
       mode,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);
-    if (!res.ok || !res.public) {
+    if (!res.ok || !res.public || !res.state) {
       setError(res.error ?? "Erro ao enviar.");
       return;
     }
-    setPub(res.public as WhoCameFirstPublic);
+    updateGame(res.public as WhoCameFirstPublic, res.state as WhoCameFirstState);
     if (res.recordedOfficial) void refresh();
   }
 
-  function reset() {
+  function handleReset() {
+    resetGame();
     setOrder(initialPublic.items.map((i) => i.id));
-    setPub(initialPublic);
     setError(null);
   }
 
@@ -226,7 +234,7 @@ export function WhoCameFirstGame({ dateKey, initialPublic, mode }: Props) {
             </ol>
           </div>
 
-          <Button variant="secondary" onClick={reset} className="w-full font-bold">
+          <Button variant="secondary" onClick={handleReset} className="w-full font-bold">
             <RotateCcw size={18} aria-hidden /> Jogar de novo (modo treino)
           </Button>
         </Card>

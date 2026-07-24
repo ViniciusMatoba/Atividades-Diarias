@@ -26,10 +26,11 @@ const GROUP_STYLES = [
   { bg: "bg-purple-400 text-slate-950 border-purple-300", badge: "Grupo Roxo" },
 ];
 
+import { usePersistedGameState } from "@/lib/usePersistedGameState";
+
 export function GeekConnectionsGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const [pub, setPub] = useState(initialPublic);
-  const [state, setState] = useState(initialState);
+  const { pub, state, updateGame, resetGame } = usePersistedGameState(dateKey, "geek-connections", initialPublic, initialState);
   const [selected, setSelected] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -64,8 +65,7 @@ export function GeekConnectionsGame({ dateKey, initialPublic, initialState, mode
     if (newPub.solved.length === pub.solved.length && !newPub.won) {
       triggerShake();
     }
-    setPub(newPub);
-    setState(res.state as GeekConnectionsState);
+    updateGame(newPub, res.state as GeekConnectionsState);
     setSelected([]);
     setMessage(res.feedback?.message ?? null);
     if (res.recordedOfficial) void refresh();
@@ -76,9 +76,8 @@ export function GeekConnectionsGame({ dateKey, initialPublic, initialState, mode
     setTimeout(() => setIsShaking(false), 500);
   }
 
-  function reset() {
-    setPub(initialPublic);
-    setState(initialState);
+  function handleReset() {
+    resetGame();
     setSelected([]);
     setMessage(null);
     setIsShaking(false);
@@ -213,7 +212,7 @@ export function GeekConnectionsGame({ dateKey, initialPublic, initialState, mode
             </div>
           )}
 
-          <Button variant="secondary" onClick={reset} className="w-full font-bold">
+          <Button variant="secondary" onClick={handleReset} className="w-full font-bold">
             <RotateCcw size={18} aria-hidden /> Jogar de novo (modo treino)
           </Button>
         </Card>
