@@ -2,6 +2,7 @@ import type { AnyGameModule, GameId, GameMeta } from "./types";
 import { mysteryCountry } from "../mysteryCountry";
 import { whoCameFirst } from "../whoCameFirst";
 import { geekConnections } from "../geekConnections";
+import { pokeGuess } from "../pokeGuess";
 
 /**
  * Registry central de módulos de jogo.
@@ -15,6 +16,7 @@ const modules: Partial<Record<GameId, AnyGameModule>> = {
   "mystery-country": mysteryCountry,
   "who-came-first": whoCameFirst,
   "geek-connections": geekConnections,
+  "poke-guess": pokeGuess,
 };
 
 /** Metadados de todos os 5 jogos do MVP (mesmo os ainda não jogáveis). */
@@ -28,14 +30,7 @@ export const GAME_CATALOG: readonly GameMeta[] = [
     theme: "geo",
     order: 2,
   },
-  {
-    id: "poke-guess",
-    name: "PokéGuess",
-    description: "Descubra o Pokémon comparando atributos.",
-    icon: "Sparkles",
-    theme: "pokemon",
-    order: 3,
-  },
+  pokeGuess.meta,
   geekConnections.meta,
   whoCameFirst.meta,
 ];

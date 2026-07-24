@@ -7,10 +7,12 @@ import { mysteryCountry } from "@/games/mysteryCountry";
 import { COUNTRIES } from "@/games/mysteryCountry/data/countries";
 import { whoCameFirst } from "@/games/whoCameFirst";
 import { geekConnections } from "@/games/geekConnections";
+import { pokeGuess } from "@/games/pokeGuess";
 import { getDailyKey } from "@/lib/dailyKey";
 import { MysteryCountryGame } from "@/games/mysteryCountry/ui/MysteryCountryGame";
 import { WhoCameFirstGame } from "@/games/whoCameFirst/ui/WhoCameFirstGame";
 import { GeekConnectionsGame } from "@/games/geekConnections/ui/GeekConnectionsGame";
+import { PokeGuessGame } from "@/games/pokeGuess/ui/PokeGuessGame";
 
 const KNOWN_IDS: GameId[] = [
   "mystery-country",
@@ -47,6 +49,8 @@ export default async function PlayPage({
         <WhoCameFirstReference mode={mode} />
       ) : id === "geek-connections" ? (
         <GeekConnectionsReference mode={mode} />
+      ) : id === "poke-guess" ? (
+        <PokeGuessReference mode={mode} />
       ) : (
         <ComingSoon name={meta.name} playable={isPlayable(id)} />
       )}
@@ -94,6 +98,15 @@ function GeekConnectionsReference({ mode }: { mode: "daily" | "infinite" }) {
   return (
     <GeekConnectionsGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />
   );
+}
+
+function PokeGuessReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = pokeGuess.generateChallenge(`${dateKey}:poke-guess`);
+  const state = pokeGuess.initialState(challenge);
+  const initialPublic = pokeGuess.toPublic(challenge, state);
+
+  return <PokeGuessGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
 }
 
 function ComingSoon({ name, playable }: { name: string; playable: boolean }) {
