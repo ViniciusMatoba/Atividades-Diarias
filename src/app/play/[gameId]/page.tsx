@@ -6,9 +6,11 @@ import type { GameId } from "@/games/core/types";
 import { mysteryCountry } from "@/games/mysteryCountry";
 import { COUNTRIES } from "@/games/mysteryCountry/data/countries";
 import { whoCameFirst } from "@/games/whoCameFirst";
+import { geekConnections } from "@/games/geekConnections";
 import { getDailyKey } from "@/lib/dailyKey";
 import { MysteryCountryGame } from "@/games/mysteryCountry/ui/MysteryCountryGame";
 import { WhoCameFirstGame } from "@/games/whoCameFirst/ui/WhoCameFirstGame";
+import { GeekConnectionsGame } from "@/games/geekConnections/ui/GeekConnectionsGame";
 
 const KNOWN_IDS: GameId[] = [
   "mystery-country",
@@ -43,6 +45,8 @@ export default async function PlayPage({
         <MysteryCountryReference mode={mode} />
       ) : id === "who-came-first" ? (
         <WhoCameFirstReference mode={mode} />
+      ) : id === "geek-connections" ? (
+        <GeekConnectionsReference mode={mode} />
       ) : (
         <ComingSoon name={meta.name} playable={isPlayable(id)} />
       )}
@@ -79,6 +83,17 @@ function WhoCameFirstReference({ mode }: { mode: "daily" | "infinite" }) {
   const initialPublic = whoCameFirst.toPublic(challenge, state); // sem anos/resposta
 
   return <WhoCameFirstGame dateKey={dateKey} initialPublic={initialPublic} mode={mode} />;
+}
+
+function GeekConnectionsReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = geekConnections.generateChallenge(`${dateKey}:geek-connections`);
+  const state = geekConnections.initialState(challenge);
+  const initialPublic = geekConnections.toPublic(challenge, state);
+
+  return (
+    <GeekConnectionsGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />
+  );
 }
 
 function ComingSoon({ name, playable }: { name: string; playable: boolean }) {

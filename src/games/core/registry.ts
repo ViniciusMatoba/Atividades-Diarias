@@ -1,6 +1,7 @@
 import type { AnyGameModule, GameId, GameMeta } from "./types";
 import { mysteryCountry } from "../mysteryCountry";
 import { whoCameFirst } from "../whoCameFirst";
+import { geekConnections } from "../geekConnections";
 
 /**
  * Registry central de módulos de jogo.
@@ -13,6 +14,7 @@ import { whoCameFirst } from "../whoCameFirst";
 const modules: Partial<Record<GameId, AnyGameModule>> = {
   "mystery-country": mysteryCountry,
   "who-came-first": whoCameFirst,
+  "geek-connections": geekConnections,
 };
 
 /** Metadados de todos os 5 jogos do MVP (mesmo os ainda não jogáveis). */
@@ -34,14 +36,7 @@ export const GAME_CATALOG: readonly GameMeta[] = [
     theme: "pokemon",
     order: 3,
   },
-  {
-    id: "geek-connections",
-    name: "Geek Connections",
-    description: "Agrupe 16 termos em 4 conexões.",
-    icon: "Grid3x3",
-    theme: "geek",
-    order: 4,
-  },
+  geekConnections.meta,
   whoCameFirst.meta,
 ];
 

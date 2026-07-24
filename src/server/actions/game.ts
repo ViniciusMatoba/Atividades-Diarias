@@ -14,6 +14,7 @@ import { z } from "zod";
 import { getGameModule } from "@/games/core/registry";
 import type { GameId } from "@/games/core/types";
 import { scoreToStars, type StarRating } from "@/lib/stars";
+import type { GuessFeedback } from "@/games/core/types";
 import { getAdminAuth, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { countDailyCompleted, recordOfficialResult } from "@/server/repo/firestore";
 
@@ -35,6 +36,7 @@ export interface SubmitResult {
   stars?: number | null;
   finished?: boolean;
   solved?: boolean;
+  feedback?: GuessFeedback;
   recordedOfficial?: boolean;
 }
 
@@ -91,6 +93,7 @@ export async function submitGuess(input: unknown): Promise<SubmitResult> {
     stars,
     finished: outcome.finished,
     solved: outcome.solved,
+    feedback: outcome.feedback,
     recordedOfficial,
   };
 }
