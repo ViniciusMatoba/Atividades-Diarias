@@ -10,6 +10,7 @@ import { StarRating } from "@/components/ui/StarRating";
 import { scoreToStars } from "@/lib/stars";
 import { isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { getIdToken } from "@/lib/firebase/auth";
+import { useAuthCtx } from "@/lib/firebase/AuthProvider";
 
 interface CountryOption {
   id: string;
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export function MysteryCountryGame({ dateKey, countries, initialPublic, initialState, mode }: Props) {
+  const { refresh } = useAuthCtx();
   const [pub, setPub] = useState(initialPublic);
   const [state, setState] = useState(initialState);
   const [selected, setSelected] = useState("");
@@ -57,6 +59,8 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
     setSelected("");
     const lastGuess = res.public.guesses.at(-1);
     setLastMessage(lastGuess?.correct ? "Acertou! 🎉" : "Não é esse. Nova pista liberada!");
+    // Se gravou resultado oficial, atualiza o dashboard (home/perfil).
+    if (res.recordedOfficial) void refresh();
   }
 
   function reset() {

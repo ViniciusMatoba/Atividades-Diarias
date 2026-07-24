@@ -3,6 +3,7 @@ import { getAdminDb, isFirebaseAdminConfigured } from "@/lib/firebase/admin";
 import { getWeekKey } from "@/lib/dailyKey";
 import { applyDailyCompletion, type StreakState } from "@/lib/streak";
 import type { StarRating } from "@/lib/stars";
+import { levelFromXp } from "@/lib/xp";
 
 /**
  * Camada de acesso a dados (Firestore, via Admin SDK). Autoridade do servidor.
@@ -142,9 +143,12 @@ export async function recordOfficialResult(
       longest: (profileSnap.data()?.longestStreak as number | undefined) ?? 0,
       lastCompletedKey: (profileSnap.data()?.lastCompletedKey as string | null | undefined) ?? null,
     };
+    const newXp = ((profileSnap.data()?.xp as number | undefined) ?? 0) + input.score;
     const profileUpdate: Record<string, unknown> = {
       totalScore: ((profileSnap.data()?.totalScore as number | undefined) ?? 0) + input.score,
       gamesCompleted: ((profileSnap.data()?.gamesCompleted as number | undefined) ?? 0) + 1,
+      xp: newXp,
+      level: levelFromXp(newXp).level,
       updatedAt: new Date(),
     };
     if (input.gamesCompletedToday >= 3) {
