@@ -35,6 +35,8 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+import { getMergedTodayResults } from "@/lib/getMergedTodayResults";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
@@ -44,28 +46,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadUserData = useCallback(async (uid: string) => {
     const db = getDb();
     const dateKey = getDailyKey();
-    const [profileSnap, resultsSnap] = await Promise.all([
-      getDoc(doc(db, "profiles", uid)),
-      getDocs(
-        query(collection(db, "officialResults"), where("uid", "==", uid), where("dateKey", "==", dateKey)),
-      ),
-    ]);
-    setProfile(profileSnap.exists() ? (profileSnap.data() as ProfileData) : null);
-    setTodayResults(
-      resultsSnap.docs.map((d) => ({
+    let firestoreResults: TodayResult[] = [];
+    try {
+      const [profileSnap, resultsSnap] = await Promise.all([
+        getDoc(doc(db, "profiles", uid)),
+        getDocs(
+          query(collection(db, "officialResults"), where("uid", "==", uid), where("dateKey", "==", dateKey)),
+        ),
+      ]);
+      setProfile(profileSnap.exists() ? (profileSnap.data() as ProfileData) : null);
+      firestoreResults = resultsSnap.docs.map((d) => ({
         gameId: d.get("gameId") as string,
         score: d.get("score") as number,
         stars: (d.get("stars") as StarRating) ?? 1,
-      })),
-    );
+      }));
+    } catch {
+      // offline fallback
+    }
+    setTodayResults(getMergedTodayResults(dateKey, firestoreResults));
   }, []);
 
   const refresh = useCallback(async () => {
-    if (user) await loadUserData(user.uid);
+    const dateKey = getDailyKey();
+    if (user) {
+      await loadUserData(user.uid);
+    } else {
+      setTodayResults(getMergedTodayResults(dateKey, []));
+    }
   }, [user, loadUserData]);
 
   useEffect(() => {
+    const dateKey = getDailyKey();
     if (!isFirebaseClientConfigured) {
+      setTodayResults(getMergedTodayResults(dateKey, []));
       setLoading(false);
       return;
     }
@@ -75,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await loadUserData(u.uid);
       } else {
         setProfile(null);
-        setTodayResults([]);
+        setTodayResults(getMergedTodayResults(dateKey, []));
       }
       setLoading(false);
     });
