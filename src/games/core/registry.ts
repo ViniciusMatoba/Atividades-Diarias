@@ -5,7 +5,7 @@ import { geekConnections } from "../geekConnections";
 import { pokeGuess } from "../pokeGuess";
 import { worldPin } from "../worldPin";
 
-import { movieQuote } from "../movieQuote";
+import { wordScramble } from "../wordScramble";
 import { pixelGuess } from "../pixelGuess";
 import { emojiMovie } from "../emojiMovie";
 import { flagMaster } from "../flagMaster";
@@ -20,7 +20,7 @@ const modules: Partial<Record<GameId, AnyGameModule>> = {
   "geek-connections": geekConnections,
   "poke-guess": pokeGuess,
   "world-pin": worldPin,
-  "movie-quote": movieQuote,
+  "word-scramble": wordScramble,
   "pixel-guess": pixelGuess,
   "emoji-movie": emojiMovie,
   "flag-master": flagMaster,
@@ -34,7 +34,7 @@ export const GAME_CATALOG: readonly GameMeta[] = [
   pokeGuess.meta,
   geekConnections.meta,
   whoCameFirst.meta,
-  movieQuote.meta,
+  wordScramble.meta,
   pixelGuess.meta,
   emojiMovie.meta,
   flagMaster.meta,

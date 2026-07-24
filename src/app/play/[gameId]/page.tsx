@@ -16,8 +16,8 @@ import { GeekConnectionsGame } from "@/games/geekConnections/ui/GeekConnectionsG
 import { PokeGuessGame } from "@/games/pokeGuess/ui/PokeGuessGame";
 import { WorldPinGame } from "@/games/worldPin/ui/WorldPinGame";
 
-import { movieQuote } from "@/games/movieQuote";
-import { MovieQuoteGame } from "@/games/movieQuote/ui/MovieQuoteGame";
+import { wordScramble } from "@/games/wordScramble";
+import { WordScrambleGame } from "@/games/wordScramble/ui/WordScrambleGame";
 import { pixelGuess } from "@/games/pixelGuess";
 import { PixelGuessGame } from "@/games/pixelGuess/ui/PixelGuessGame";
 import { emojiMovie } from "@/games/emojiMovie";
@@ -33,7 +33,7 @@ const KNOWN_IDS: GameId[] = [
   "poke-guess",
   "geek-connections",
   "who-came-first",
-  "movie-quote",
+  "word-scramble",
   "pixel-guess",
   "emoji-movie",
   "flag-master",
@@ -72,8 +72,8 @@ export default async function PlayPage({
         <PokeGuessReference mode={mode} />
       ) : id === "world-pin" ? (
         <WorldPinReference mode={mode} />
-      ) : id === "movie-quote" ? (
-        <MovieQuoteReference mode={mode} />
+      ) : id === "word-scramble" ? (
+        <WordScrambleReference mode={mode} />
       ) : id === "pixel-guess" ? (
         <PixelGuessReference mode={mode} />
       ) : id === "emoji-movie" ? (
@@ -149,13 +149,13 @@ function WorldPinReference({ mode }: { mode: "daily" | "infinite" }) {
   return <WorldPinGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
 }
 
-function MovieQuoteReference({ mode }: { mode: "daily" | "infinite" }) {
+function WordScrambleReference({ mode }: { mode: "daily" | "infinite" }) {
   const dateKey = getDailyKey();
-  const challenge = movieQuote.generateChallenge(`${dateKey}:movie-quote`);
-  const state = movieQuote.initialState(challenge);
-  const initialPublic = movieQuote.toPublic(challenge, state);
+  const challenge = wordScramble.generateChallenge(`${dateKey}:word-scramble`);
+  const state = wordScramble.initialState(challenge);
+  const initialPublic = wordScramble.toPublic(challenge, state);
 
-  return <MovieQuoteGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
+  return <WordScrambleGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
 }
 
 function PixelGuessReference({ mode }: { mode: "daily" | "infinite" }) {

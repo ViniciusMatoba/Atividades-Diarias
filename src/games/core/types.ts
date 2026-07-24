@@ -19,7 +19,7 @@ export type GameId =
   | "poke-guess"
   | "geek-connections"
   | "who-came-first"
-  | "movie-quote"
+  | "word-scramble"
   | "pixel-guess"
   | "emoji-movie"
   | "flag-master"
