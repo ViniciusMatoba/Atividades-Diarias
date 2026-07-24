@@ -24,6 +24,10 @@ const KNOWN_IDS: GameId[] = [
   "who-came-first",
 ];
 
+export function generateStaticParams() {
+  return KNOWN_IDS.map((gameId) => ({ gameId }));
+}
+
 export default async function PlayPage({
   params,
   searchParams,
