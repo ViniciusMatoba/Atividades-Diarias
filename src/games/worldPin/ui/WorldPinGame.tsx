@@ -1,13 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { MapPin, RotateCcw, Navigation, BookOpen } from "lucide-react";
+import { useState } from "react";
+import { MapPin, RotateCcw, Navigation, BookOpen, Check } from "lucide-react";
 import { submitGuess } from "@/server/actions/game";
-import type { WorldPinPublic, WorldPinState } from "@/games/worldPin";
+import type { WorldPinPublic, WorldPinState, WorldPinGuessRow } from "@/games/worldPin";
 import { getPinFlagUrl } from "@/games/worldPin/data/pinCountries";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StarRating } from "@/components/ui/StarRating";
+import { AutocompleteInput } from "@/components/ui/AutocompleteInput";
 import { scoreToStars } from "@/lib/stars";
 import { isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { getIdToken } from "@/lib/firebase/auth";
@@ -22,46 +23,64 @@ interface Props {
   mode: "daily" | "infinite";
 }
 
-
-
 function toSvg(lat: number, lon: number): { x: number; y: number } {
   return { x: lon + 180, y: 90 - lat };
 }
 
-function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): string {
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const y = Math.sin(dLon) * Math.cos(lat2 * (Math.PI / 180));
-  const x =
-    Math.cos(lat1 * (Math.PI / 180)) * Math.sin(lat2 * (Math.PI / 180)) -
-    Math.sin(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.cos(dLon);
-  let brng = (Math.atan2(y, x) * 180) / Math.PI;
-  brng = (brng + 360) % 360;
-
-  const directions = ["Norte", "Nordeste", "Leste", "Sudeste", "Sul", "Sudoeste", "Oeste", "Noroeste"];
-  const index = Math.round(brng / 45) % 8;
-  return directions[index] || "Norte";
+function GuessRow({ row }: { row: WorldPinGuessRow }) {
+  return (
+    <div
+      className={`flex items-center gap-2.5 rounded-xl border p-2.5 ${
+        row.correct ? "border-[var(--color-success)] bg-[var(--color-success)]/10" : "gd-border gd-surface"
+      }`}
+    >
+      {row.code ? (
+        <img
+          src={getPinFlagUrl(row.code)}
+          alt={`Bandeira de ${row.name}`}
+          className="size-7 shrink-0 rounded object-cover"
+        />
+      ) : null}
+      <span className="flex-1 truncate text-sm font-bold gd-text">{row.name}</span>
+      {row.correct ? (
+        <span className="flex items-center gap-1 text-sm font-bold text-[var(--color-success)]">
+          <Check size={16} aria-hidden /> Acertou!
+        </span>
+      ) : (
+        <div className="flex items-center gap-2 text-right">
+          <span className="text-xs font-bold gd-text">{row.distanceKm.toLocaleString("pt-BR")} km</span>
+          <span className="flex items-center gap-0.5 text-xs font-semibold text-[var(--color-warning)]">
+            <Navigation size={12} aria-hidden /> {row.direction}
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const svgRef = useRef<SVGSVGElement>(null);
-  const { pub, state, updateGame, resetGame } = usePersistedGameState(dateKey, "world-pin", initialPublic, initialState);
-  const [pending, setPending] = useState<{ lat: number; lon: number } | null>(null);
+  const { pub, state, updateGame, resetGame } = usePersistedGameState<WorldPinPublic, WorldPinState>(
+    dateKey,
+    "world-pin",
+    initialPublic,
+    initialState,
+  );
+  const [selected, setSelected] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function onMapClick(e: React.MouseEvent<SVGSVGElement>) {
-    if (pub.submitted) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const svgX = ((e.clientX - rect.left) / rect.width) * 360;
-    const svgY = ((e.clientY - rect.top) / rect.height) * 180;
-    const lon = Math.max(-180, Math.min(180, svgX - 180));
-    const lat = Math.max(-90, Math.min(90, 90 - svgY));
-    setPending({ lat: Math.round(lat), lon: Math.round(lon) });
-  }
+  const guessedIds = new Set(pub.guesses.map((g) => g.id));
+  const options = pub.countryList
+    .filter((c) => !guessedIds.has(c.id))
+    .map((c) => ({ id: c.id, label: c.name }));
 
-  async function confirm() {
-    if (!pending || busy) return;
+  const pin = toSvg(pub.pin.lat, pub.pin.lon);
+  const attempts = pub.guesses.length;
+  const finalScore = pub.solved ? Math.round(1000 * (1 - (attempts - 1) / 6)) : 0;
+
+  async function onGuess() {
+    if (!selected || busy) return;
     setBusy(true);
     setError(null);
     const idToken = isFirebaseClientConfigured ? await getIdToken() : null;
@@ -69,7 +88,7 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
       gameId: "world-pin",
       dateKey,
       state,
-      guess: pending,
+      guess: { countryId: selected },
       mode,
       ...(idToken ? { idToken } : {}),
     });
@@ -79,18 +98,15 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
       return;
     }
     updateGame(res.public as WorldPinPublic, res.state as WorldPinState);
+    setSelected("");
     if (res.recordedOfficial) void refresh();
   }
 
   function reset() {
     resetGame();
-    setPending(null);
+    setSelected("");
     setError(null);
   }
-
-  const guessPin = pub.result ? toSvg(pub.result.guess.lat, pub.result.guess.lon) : pending ? toSvg(pending.lat, pending.lon) : null;
-  const answerPin = pub.result ? toSvg(pub.result.answer.lat, pub.result.answer.lon) : null;
-  const bearingDirection = pub.result && !pub.result.bullseye ? calculateBearing(pub.result.guess.lat, pub.result.guess.lon, pub.result.answer.lat, pub.result.answer.lon) : null;
 
   return (
     <div className="space-y-4">
@@ -101,65 +117,32 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
           </div>
           <div>
             <h1 className="text-xl font-extrabold tracking-tight gd-text">Pin do Mundo</h1>
-            <p className="text-xs gd-muted">
-              Onde fica <span className="font-extrabold text-[var(--color-geo)]">{pub.countryName}</span>?
-            </p>
+            <p className="text-xs gd-muted">Que país está marcado no mapa?</p>
           </div>
         </div>
         <div className="rounded-xl border gd-border gd-surface-2 px-3 py-1.5 text-center">
-          <span className="block text-[10px] uppercase font-bold gd-muted">Modo</span>
-          <span className="text-xs font-bold text-[var(--color-geo)]">{mode === "daily" ? "Diário" : "Treino"}</span>
+          <span className="block text-[10px] uppercase font-bold gd-muted">Tentativas</span>
+          <span className="text-base font-black text-[var(--color-geo)]">{pub.guessesRemaining}</span>
         </div>
       </header>
 
       <div className="relative rounded-2xl border gd-border overflow-hidden bg-slate-950 shadow-2xl">
         <svg
-          ref={svgRef}
           viewBox="0 0 360 180"
-          onClick={onMapClick}
-          className={`w-full ${pub.submitted ? "" : "cursor-crosshair"}`}
+          className="w-full"
           style={{ aspectRatio: "2 / 1" }}
           role="img"
-          aria-label="Mapa-múndi interativo para marcar a localização"
+          aria-label="Mapa-múndi com o país-alvo marcado"
         >
-          {/* Mapa vetorial detalhado com continentes, ilhas, oceanos e linhas cartográficas */}
           <WorldMapGraphic />
-
-          {/* linha conectora entre palpite e alvo */}
-          {guessPin && answerPin && (
-            <line
-              x1={guessPin.x}
-              y1={guessPin.y}
-              x2={answerPin.x}
-              y2={answerPin.y}
-              stroke="#eab308"
-              strokeWidth={1.2}
-              strokeDasharray="2 2"
-              className="animate-pulse"
-            />
-          )}
-
-          {/* pino do palpite do jogador */}
-          {guessPin && (
-            <g>
-              <circle cx={guessPin.x} cy={guessPin.y} r={6} fill="#3b82f6" opacity={0.4} className="animate-ping" />
-              <circle cx={guessPin.x} cy={guessPin.y} r={3.5} fill="#2563eb" stroke="#ffffff" strokeWidth={1} />
-              <text x={guessPin.x} y={guessPin.y - 6} textAnchor="middle" fill="#38bdf8" fontSize="4.5" fontWeight="bold">
-                Seu Palpite
-              </text>
-            </g>
-          )}
-
-          {/* pino da resposta correta (após envio) */}
-          {answerPin && (
-            <g>
-              <circle cx={answerPin.x} cy={answerPin.y} r={8} fill="#10b981" opacity={0.4} className="animate-ping" />
-              <circle cx={answerPin.x} cy={answerPin.y} r={4} fill="#059669" stroke="#ffffff" strokeWidth={1} />
-              <text x={answerPin.x} y={answerPin.y - 7} textAnchor="middle" fill="#34d399" fontSize="5" fontWeight="black">
-                {pub.countryName} 🎯
-              </text>
-            </g>
-          )}
+          {/* pino do país-alvo (localização mostrada; nome escondido até o fim) */}
+          <g>
+            <circle cx={pin.x} cy={pin.y} r={8} fill="#ef4444" opacity={0.35} className="animate-ping" />
+            <circle cx={pin.x} cy={pin.y} r={3.5} fill="#dc2626" stroke="#ffffff" strokeWidth={1} />
+            <text x={pin.x} y={pin.y - 6} textAnchor="middle" fill="#f87171" fontSize="5" fontWeight="black">
+              {pub.finished && pub.answer ? pub.answer.name : "?"}
+            </text>
+          </g>
         </svg>
       </div>
 
@@ -169,59 +152,72 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
         </p>
       )}
 
-      {!pub.submitted ? (
-        <Button onClick={confirm} disabled={!pending || busy} size="lg" className="w-full font-bold shadow-md">
-          {busy ? "Enviando pino…" : pending ? "Confirmar marcação no mapa" : "Toque no mapa para posicionar o pino"}
-        </Button>
+      {/* Palpites anteriores */}
+      {pub.guesses.length > 0 && (
+        <div className="space-y-2">
+          {pub.guesses.map((row) => (
+            <GuessRow key={row.id} row={row} />
+          ))}
+        </div>
+      )}
+
+      {!pub.finished ? (
+        <div className="space-y-2.5">
+          <AutocompleteInput
+            options={options}
+            value={selected}
+            onChange={setSelected}
+            placeholder="Digite o nome do país…"
+            disabled={busy}
+          />
+          <Button onClick={onGuess} disabled={!selected || busy} size="lg" className="w-full font-bold shadow-md">
+            {busy ? "Enviando…" : "Adivinhar país"}
+          </Button>
+        </div>
       ) : (
-        pub.result && (
+        pub.answer && (
           <Card className="gd-bounce-in space-y-4 border-2 border-[var(--color-geo)]/50 p-5 text-center shadow-xl">
             <div className="flex flex-col items-center gap-2">
               <span className="rounded-full bg-[var(--color-geo)]/20 px-3 py-1 text-xs font-bold text-[var(--color-geo)]">
-                {pub.result.bullseye ? "🎯 Precisão Cirúrgica!" : "📍 Pino Posicionado"}
+                {pub.solved ? "🎯 Você acertou!" : "📍 País Revelado"}
               </span>
               <h2 className="text-2xl font-extrabold tracking-tight gd-text">
-                {pub.result.bullseye ? "Na Mosca!" : `Distância: ${pub.result.distanceKm.toLocaleString("pt-BR")} km`}
+                {pub.solved ? `Em ${attempts} tentativa(s)!` : "Não foi dessa vez"}
               </h2>
-              {bearingDirection && (
-                <p className="flex items-center gap-1 text-xs font-semibold text-[var(--color-warning)]">
-                  <Navigation size={13} /> O país alvo fica na direção <span className="font-bold">{bearingDirection}</span>
-                </p>
-              )}
             </div>
 
             <div className="rounded-2xl border gd-border gd-surface-2 p-4 text-left space-y-3">
               <div className="flex items-center gap-4">
-                {pub.result.answer.code && (
+                {pub.answer.code && (
                   <div className="size-16 shrink-0 overflow-hidden rounded-xl border gd-border shadow-md">
                     <img
-                      src={getPinFlagUrl(pub.result.answer.code)}
-                      alt={`Bandeira de ${pub.result.answer.name}`}
+                      src={getPinFlagUrl(pub.answer.code)}
+                      alt={`Bandeira de ${pub.answer.name}`}
                       className="h-full w-full object-cover"
                     />
                   </div>
                 )}
                 <div>
                   <span className="text-xs font-bold text-[var(--color-geo)] uppercase tracking-wider">
-                    Geografia & Fatos
+                    Geografia &amp; Fatos
                   </span>
-                  <h3 className="text-xl font-black gd-text">{pub.result.answer.name}</h3>
+                  <h3 className="text-xl font-black gd-text">{pub.answer.name}</h3>
                 </div>
               </div>
 
-              {pub.result.answer.curiosity && (
+              {pub.answer.curiosity && (
                 <div className="rounded-xl bg-black/20 p-3 space-y-1">
                   <span className="flex items-center gap-1 text-[11px] font-bold uppercase text-[var(--color-geo)]">
                     <BookOpen size={13} /> Fato da Região
                   </span>
-                  <p className="text-xs leading-relaxed gd-text font-medium">{pub.result.answer.curiosity}</p>
+                  <p className="text-xs leading-relaxed gd-text font-medium">{pub.answer.curiosity}</p>
                 </div>
               )}
             </div>
 
             <div className="flex flex-col items-center gap-1.5 pt-2">
-              <StarRating value={scoreToStars(pub.result.score)} size={28} />
-              <p className="text-sm font-extrabold gd-text">{pub.result.score} pontos obtidos</p>
+              <StarRating value={scoreToStars(finalScore)} size={28} />
+              <p className="text-sm font-extrabold gd-text">{finalScore} pontos obtidos</p>
             </div>
 
             <Button variant="secondary" onClick={reset} className="w-full font-bold">
@@ -233,4 +229,3 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
     </div>
   );
 }
-

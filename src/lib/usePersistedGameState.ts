@@ -8,7 +8,8 @@ export function usePersistedGameState<TPublic, TState>(
   initialPublic: TPublic,
   initialState: TState,
 ) {
-  const storageKey = `geekdaily:v1:state:${dateKey}:${gameId}`;
+  // v2: formato do Pin do Mundo mudou (adivinhar país). Invalida caches antigos.
+  const storageKey = `geekdaily:v2:state:${dateKey}:${gameId}`;
 
   const [pub, setPub] = useState<TPublic>(() => {
     if (typeof window === "undefined") return initialPublic;

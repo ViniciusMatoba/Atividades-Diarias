@@ -2,50 +2,79 @@ import { z } from "zod";
 import type { GameModule, GameResult, GuessOutcome } from "@/games/core/types";
 import { pickDeterministic } from "@/games/core/seed";
 import { PIN_COUNTRIES, getPinCountry } from "./data/pinCountries";
-import { haversineKm, scoreWorldPin, WORLD_PIN_CONFIG } from "./scoring";
+import {
+  bearingDirection,
+  haversineKm,
+  proximityPct,
+  scoreWorldPin,
+  WORLD_PIN_CONFIG,
+  type CompassDirection,
+} from "./scoring";
 
 // ---- Tipos ----
+// Mecânica: o pino aparece no local do país-resposta; o jogador ADIVINHA o país.
+// A cada erro, revela distância + direção até o país correto.
 
 export interface WorldPinChallenge {
   countryId: string;
 }
 
 export interface WorldPinState {
-  submitted: boolean;
-  lat: number | null;
-  lon: number | null;
-  distanceKm: number | null;
-  solved: boolean; // clicou muito perto (bullseye)
+  guesses: string[]; // ids de países tentados
+  finished: boolean;
+  solved: boolean;
+}
+
+export interface WorldPinGuessRow {
+  id: string;
+  name: string;
+  code: string;
+  distanceKm: number;
+  direction: CompassDirection | null; // null quando é o acerto
+  proximityPct: number; // 0..100
+  correct: boolean;
 }
 
 export interface WorldPinPublic {
-  countryName: string;
-  submitted: boolean;
-  result: {
-    guess: { lat: number; lon: number };
-    answer: { name: string; lat: number; lon: number; code?: string; curiosity?: string };
-    distanceKm: number;
-    score: number;
-    bullseye: boolean;
-  } | null;
+  /** Localização do país-resposta (o pino mostrado no mapa). */
+  pin: { lat: number; lon: number };
+  guesses: WorldPinGuessRow[];
+  guessesRemaining: number;
+  finished: boolean;
+  solved: boolean;
+  countryList: { id: string; name: string }[];
+  /** Revelado só ao terminar. */
+  answer: { name: string; code: string; curiosity: string } | null;
 }
 
 export interface WorldPinGuess {
-  lat: number;
-  lon: number;
+  countryId: string;
 }
 
-const guessSchema = z.object({
-  lat: z.number().min(-90).max(90),
-  lon: z.number().min(-180).max(180),
-});
+const guessSchema = z.object({ countryId: z.string().min(1) });
 const stateSchema = z.object({
-  submitted: z.boolean(),
-  lat: z.number().nullable(),
-  lon: z.number().nullable(),
-  distanceKm: z.number().nullable(),
+  guesses: z.array(z.string().min(1)).max(WORLD_PIN_CONFIG.maxGuesses),
+  finished: z.boolean(),
   solved: z.boolean(),
 });
+
+function rowFor(guessId: string, answerLatLon: { lat: number; lon: number }, answerId: string): WorldPinGuessRow {
+  const g = getPinCountry(guessId);
+  const correct = guessId === answerId;
+  if (!g) {
+    return { id: guessId, name: guessId, code: "", distanceKm: 0, direction: null, proximityPct: 0, correct };
+  }
+  const distanceKm = Math.round(haversineKm({ lat: g.lat, lon: g.lon }, answerLatLon));
+  return {
+    id: guessId,
+    name: g.name,
+    code: g.code,
+    distanceKm,
+    direction: correct ? null : bearingDirection({ lat: g.lat, lon: g.lon }, answerLatLon),
+    proximityPct: correct ? 100 : proximityPct(distanceKm),
+    correct,
+  };
+}
 
 // ---- Módulo ----
 
@@ -53,7 +82,7 @@ export const worldPin: GameModule<WorldPinChallenge, WorldPinPublic, WorldPinSta
   meta: {
     id: "world-pin",
     name: "Pin do Mundo",
-    description: "Aponte no mapa onde fica o país.",
+    description: "Adivinhe o país marcado no mapa.",
     icon: "MapPin",
     theme: "geo",
     order: 2,
@@ -64,7 +93,7 @@ export const worldPin: GameModule<WorldPinChallenge, WorldPinPublic, WorldPinSta
   },
 
   initialState(): WorldPinState {
-    return { submitted: false, lat: null, lon: null, distanceKm: null, solved: false };
+    return { guesses: [], finished: false, solved: false };
   },
 
   parseState(raw: unknown): WorldPinState {
@@ -72,7 +101,9 @@ export const worldPin: GameModule<WorldPinChallenge, WorldPinPublic, WorldPinSta
   },
 
   parseGuess(raw: unknown): WorldPinGuess {
-    return guessSchema.parse(raw);
+    const parsed = guessSchema.parse(raw);
+    if (!getPinCountry(parsed.countryId)) throw new Error(`País inválido: ${parsed.countryId}`);
+    return parsed;
   },
 
   applyGuess(
@@ -80,45 +111,56 @@ export const worldPin: GameModule<WorldPinChallenge, WorldPinPublic, WorldPinSta
     state: WorldPinState,
     guess: WorldPinGuess,
   ): GuessOutcome<WorldPinState> {
-    if (state.submitted) {
+    if (state.finished) {
       return { state, feedback: { correct: state.solved, message: "Partida encerrada." }, finished: true, solved: state.solved };
     }
     const answer = getPinCountry(challenge.countryId);
     if (!answer) throw new Error("Desafio inválido.");
 
-    const distanceKm = Math.round(haversineKm(guess, { lat: answer.lat, lon: answer.lon }));
-    const bullseye = distanceKm <= WORLD_PIN_CONFIG.bullseyeKm;
+    const guesses = [...state.guesses, guess.countryId];
+    const correct = guess.countryId === challenge.countryId;
+    if (correct) {
+      return {
+        state: { guesses, finished: true, solved: true },
+        feedback: { correct: true, message: `Acertou! É ${answer.name}.` },
+        finished: true,
+        solved: true,
+      };
+    }
+
+    const outOfGuesses = guesses.length >= WORLD_PIN_CONFIG.maxGuesses;
+    const row = rowFor(guess.countryId, { lat: answer.lat, lon: answer.lon }, challenge.countryId);
     return {
-      state: { submitted: true, lat: guess.lat, lon: guess.lon, distanceKm, solved: bullseye },
+      state: { guesses, finished: outOfGuesses, solved: false },
       feedback: {
-        correct: bullseye,
-        message: bullseye ? "Na mosca! 🎯" : `A ${distanceKm} km do alvo.`,
-        details: { distanceKm, bullseye },
+        correct: false,
+        message: outOfGuesses
+          ? `Fim! Era ${answer.name}.`
+          : `${row.distanceKm.toLocaleString("pt-BR")} km a ${row.direction} do alvo.`,
+        details: { distanceKm: row.distanceKm, direction: row.direction },
       },
-      finished: true,
-      solved: bullseye,
+      finished: outOfGuesses,
+      solved: false,
     };
   },
 
   score(challenge: WorldPinChallenge, state: WorldPinState): number {
-    if (!state.submitted || state.distanceKm === null) return 0;
-    return scoreWorldPin(state.distanceKm);
+    return scoreWorldPin(state.guesses.length, state.solved);
   },
 
   toPublic(challenge: WorldPinChallenge, state: WorldPinState): WorldPinPublic {
     const answer = getPinCountry(challenge.countryId);
     if (!answer) throw new Error("Desafio inválido.");
-    const result =
-      state.submitted && state.lat !== null && state.lon !== null && state.distanceKm !== null
-        ? {
-            guess: { lat: state.lat, lon: state.lon },
-            answer: { name: answer.name, lat: answer.lat, lon: answer.lon, code: answer.code, curiosity: answer.curiosity },
-            distanceKm: state.distanceKm,
-            score: scoreWorldPin(state.distanceKm),
-            bullseye: state.solved,
-          }
-        : null;
-    return { countryName: answer.name, submitted: state.submitted, result };
+    const answerLatLon = { lat: answer.lat, lon: answer.lon };
+    return {
+      pin: answerLatLon,
+      guesses: state.guesses.map((id) => rowFor(id, answerLatLon, challenge.countryId)),
+      guessesRemaining: Math.max(0, WORLD_PIN_CONFIG.maxGuesses - state.guesses.length),
+      finished: state.finished,
+      solved: state.solved,
+      countryList: PIN_COUNTRIES.map((c) => ({ id: c.id, name: c.name })),
+      answer: state.finished ? { name: answer.name, code: answer.code, curiosity: answer.curiosity } : null,
+    };
   },
 
   toResult(challenge: WorldPinChallenge, state: WorldPinState): GameResult {
@@ -126,8 +168,8 @@ export const worldPin: GameModule<WorldPinChallenge, WorldPinPublic, WorldPinSta
     return {
       score: this.score(challenge, state),
       solved: state.solved,
-      attempts: state.submitted ? 1 : 0,
-      summary: { countryId: challenge.countryId, countryName: answer?.name, distanceKm: state.distanceKm },
+      attempts: state.guesses.length,
+      summary: { countryId: challenge.countryId, countryName: answer?.name },
     };
   },
 };

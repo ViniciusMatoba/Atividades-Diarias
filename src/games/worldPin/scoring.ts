@@ -1,8 +1,8 @@
 import { normalizeGameScore } from "@/lib/scoring";
 
 export const WORLD_PIN_CONFIG = {
-  maxDistanceKm: 5000, // distância na qual o score chega a 0
-  bullseyeKm: 300, // "muito próximo" (conquista / considerado resolvido)
+  maxGuesses: 6, // tentativas até encerrar
+  earthMaxKm: 20015, // metade da circunferência (p/ barra de proximidade)
 } as const;
 
 export interface LatLon {
@@ -22,7 +22,31 @@ export function haversineKm(a: LatLon, b: LatLon): number {
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
 }
 
-/** score = 1000 * max(0, 1 - d/Dmax). Clique exato → 1000. */
-export function scoreWorldPin(distanceKm: number): number {
-  return normalizeGameScore(1000 * (1 - distanceKm / WORLD_PIN_CONFIG.maxDistanceKm));
+const DIRECTIONS = ["Norte", "Nordeste", "Leste", "Sudeste", "Sul", "Sudoeste", "Oeste", "Noroeste"] as const;
+export type CompassDirection = (typeof DIRECTIONS)[number];
+
+/** Direção (rosa dos ventos, 8 pontos) para ir de `from` até `to`. */
+export function bearingDirection(from: LatLon, to: LatLon): CompassDirection {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLon = toRad(to.lon - from.lon);
+  const y = Math.sin(dLon) * Math.cos(toRad(to.lat));
+  const x =
+    Math.cos(toRad(from.lat)) * Math.sin(toRad(to.lat)) -
+    Math.sin(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.cos(dLon);
+  const brng = ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  return DIRECTIONS[Math.round(brng / 45) % 8] as CompassDirection;
+}
+
+/** 0..100 — quão perto o palpite está (barra "quente/frio"). */
+export function proximityPct(distanceKm: number): number {
+  return Math.round(100 * Math.max(0, 1 - distanceKm / WORLD_PIN_CONFIG.earthMaxKm));
+}
+
+/**
+ * Pontuação por nº de tentativas (só se acertou o país).
+ * Acerto de primeira → 1000; cai a cada tentativa.
+ */
+export function scoreWorldPin(attempts: number, solved: boolean): number {
+  if (!solved) return 0;
+  return normalizeGameScore(1000 * (1 - (attempts - 1) / WORLD_PIN_CONFIG.maxGuesses));
 }
