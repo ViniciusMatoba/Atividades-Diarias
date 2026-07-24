@@ -15,18 +15,11 @@ import { getIdToken } from "@/lib/firebase/auth";
 import { useAuthCtx } from "@/lib/firebase/AuthProvider";
 import { usePersistedGameState } from "@/lib/usePersistedGameState";
 
-// Textura equirretangular real da Terra (NASA Blue Marble, 2:1 — casa com o viewBox 360x180).
-const EARTH_TEXTURE_URL = "https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg";
-
 interface Props {
   dateKey: string;
   initialPublic: WorldPinPublic;
   initialState: WorldPinState;
   mode: "daily" | "infinite";
-}
-
-function toSvg(lat: number, lon: number): { x: number; y: number } {
-  return { x: lon + 180, y: 90 - lat };
 }
 
 function GuessRow({ row }: { row: WorldPinGuessRow }) {
@@ -57,6 +50,8 @@ function GuessRow({ row }: { row: WorldPinGuessRow }) {
   );
 }
 
+import { WorldPinMap } from "./WorldPinMap";
+
 export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
   const { pub, state, updateGame, resetGame } = usePersistedGameState<WorldPinPublic, WorldPinState>(
@@ -74,7 +69,6 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
     .filter((c) => !guessedIds.has(c.id))
     .map((c) => ({ id: c.id, label: c.name }));
 
-  const pin = toSvg(pub.pin.lat, pub.pin.lon);
   const attempts = pub.guesses.length;
   const finalScore = pub.solved ? Math.round(1000 * (1 - (attempts - 1) / 6)) : 0;
 
@@ -115,8 +109,8 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
             <MapPin size={22} aria-hidden />
           </div>
           <div>
-            <h1 className="text-xl font-extrabold tracking-tight gd-text">Pin do Mundo</h1>
-            <p className="text-xs gd-muted">Que país está marcado no mapa?</p>
+            <h1 className="text-xl font-extrabold tracking-tight gd-text">Pin no Globo</h1>
+            <p className="text-xs gd-muted">Que país está marcado pelo pino vermelho?</p>
           </div>
         </div>
         <div className="rounded-xl border gd-border gd-surface-2 px-3 py-1.5 text-center">
@@ -125,33 +119,11 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
         </div>
       </header>
 
-      <div className="relative rounded-2xl border gd-border overflow-hidden bg-slate-950 shadow-2xl">
-        <svg
-          viewBox="0 0 360 180"
-          className="w-full"
-          style={{ aspectRatio: "2 / 1" }}
-          role="img"
-          aria-label="Mapa-múndi com o país-alvo marcado"
-        >
-          {/* Globo terrestre real (imagem de satélite equirretangular) */}
-          <image
-            href={EARTH_TEXTURE_URL}
-            x={0}
-            y={0}
-            width={360}
-            height={180}
-            preserveAspectRatio="none"
-          />
-          {/* pino do país-alvo (localização mostrada; nome escondido até o fim) */}
-          <g>
-            <circle cx={pin.x} cy={pin.y} r={8} fill="#ef4444" opacity={0.35} className="animate-ping" />
-            <circle cx={pin.x} cy={pin.y} r={3.5} fill="#dc2626" stroke="#ffffff" strokeWidth={1} />
-            <text x={pin.x} y={pin.y - 6} textAnchor="middle" fill="#f87171" fontSize="5" fontWeight="black">
-              {pub.finished && pub.answer ? pub.answer.name : "?"}
-            </text>
-          </g>
-        </svg>
-      </div>
+      {/* Mapa-múndi interativo com zoom, navegação por arraste e fronteiras vetoriais dos países */}
+      <WorldPinMap
+        pin={pub.pin}
+        label={pub.finished && pub.answer ? pub.answer.name : "?"}
+      />
 
       {error && (
         <p className="text-center text-sm font-semibold text-[var(--color-danger)]" role="alert">

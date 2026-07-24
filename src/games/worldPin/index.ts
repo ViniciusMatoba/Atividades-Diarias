@@ -64,8 +64,8 @@ function rowFor(guessId: string, answerLatLon: { lat: number; lon: number }, ans
 export const worldPin: GameModule<WorldPinChallenge, WorldPinPublic, WorldPinState, WorldPinGuess> = {
   meta: {
     id: "world-pin",
-    name: "Pin do Mundo",
-    description: "Adivinhe o país marcado no mapa.",
+    name: "Pin no Globo",
+    description: "Identifique no mapa-múndi interativo qual é o país apontado pelo pino vermelho.",
     icon: "MapPin",
     theme: "geo",
     order: 2,
