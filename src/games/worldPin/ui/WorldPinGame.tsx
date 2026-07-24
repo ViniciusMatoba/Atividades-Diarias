@@ -13,6 +13,7 @@ import { isFirebaseClientConfigured } from "@/lib/firebase/client";
 import { getIdToken } from "@/lib/firebase/auth";
 import { useAuthCtx } from "@/lib/firebase/AuthProvider";
 import { usePersistedGameState } from "@/lib/usePersistedGameState";
+import { WorldMapGraphic } from "@/games/worldPin/ui/WorldMapGraphic";
 
 interface Props {
   dateKey: string;
@@ -21,14 +22,7 @@ interface Props {
   mode: "daily" | "infinite";
 }
 
-const CONTINENTS: { name: string; points: string; cx: number; cy: number }[] = [
-  { name: "América do Norte", points: "15,25 60,15 120,20 130,45 95,70 75,72 70,60 40,45 20,40", cx: 70, cy: 40 },
-  { name: "América do Sul", points: "100,80 118,78 145,85 140,110 120,145 112,140 105,110 100,95", cx: 118, cy: 108 },
-  { name: "Europa", points: "170,54 205,50 222,32 195,20 175,35", cx: 194, cy: 38 },
-  { name: "África", points: "165,55 195,52 215,60 230,80 222,110 205,127 190,120 185,90 168,78", cx: 197, cy: 90 },
-  { name: "Ásia", points: "222,30 300,18 358,28 340,55 325,80 285,82 255,70 230,55", cx: 285, cy: 48 },
-  { name: "Oceania", points: "293,103 334,110 325,130 297,127", cx: 312, cy: 118 },
-];
+
 
 function toSvg(lat: number, lon: number): { x: number; y: number } {
   return { x: lon + 180, y: 90 - lat };
@@ -118,7 +112,7 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
         </div>
       </header>
 
-      <div className="relative rounded-2xl border gd-border overflow-hidden bg-slate-950 shadow-inner">
+      <div className="relative rounded-2xl border gd-border overflow-hidden bg-slate-950 shadow-2xl">
         <svg
           ref={svgRef}
           viewBox="0 0 360 180"
@@ -126,27 +120,10 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
           className={`w-full ${pub.submitted ? "" : "cursor-crosshair"}`}
           style={{ aspectRatio: "2 / 1" }}
           role="img"
-          aria-label="Mapa-múndi para marcar a localização"
+          aria-label="Mapa-múndi interativo para marcar a localização"
         >
-          {/* graticule */}
-          {[30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((x) => (
-            <line key={`v${x}`} x1={x} y1={0} x2={x} y2={180} stroke="rgba(255,255,255,0.06)" strokeWidth={0.4} />
-          ))}
-          {[30, 60, 90, 120, 150].map((y) => (
-            <line key={`h${y}`} x1={0} y1={y} x2={360} y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth={0.4} />
-          ))}
-          {/* linha do equador */}
-          <line x1={0} y1={90} x2={360} y2={90} stroke="rgba(0,184,148,0.2)" strokeWidth={0.6} strokeDasharray="3 3" />
-
-          {/* continentes aproximados */}
-          {CONTINENTS.map((c) => (
-            <g key={c.name}>
-              <polygon points={c.points} fill="var(--color-geo)" opacity={0.3} className="transition-all hover:opacity-40" />
-              <text x={c.cx} y={c.cy} textAnchor="middle" fontSize={5} fill="var(--muted)" fontWeight="bold" opacity={0.7}>
-                {c.name}
-              </text>
-            </g>
-          ))}
+          {/* Mapa vetorial detalhado com continentes, ilhas, oceanos e linhas cartográficas */}
+          <WorldMapGraphic />
 
           {/* linha conectora entre palpite e alvo */}
           {guessPin && answerPin && (
@@ -155,26 +132,32 @@ export function WorldPinGame({ dateKey, initialPublic, initialState, mode }: Pro
               y1={guessPin.y}
               x2={answerPin.x}
               y2={answerPin.y}
-              stroke="var(--color-warning)"
-              strokeWidth={1}
-              strokeDasharray="3 3"
+              stroke="#eab308"
+              strokeWidth={1.2}
+              strokeDasharray="2 2"
               className="animate-pulse"
             />
           )}
 
-          {/* pino do palpite */}
+          {/* pino do palpite do jogador */}
           {guessPin && (
             <g>
-              <circle cx={guessPin.x} cy={guessPin.y} r={4} fill="var(--color-primary)" opacity={0.3} className="animate-ping" />
-              <circle cx={guessPin.x} cy={guessPin.y} r={3} fill="var(--color-primary)" stroke="white" strokeWidth={0.8} />
+              <circle cx={guessPin.x} cy={guessPin.y} r={6} fill="#3b82f6" opacity={0.4} className="animate-ping" />
+              <circle cx={guessPin.x} cy={guessPin.y} r={3.5} fill="#2563eb" stroke="#ffffff" strokeWidth={1} />
+              <text x={guessPin.x} y={guessPin.y - 6} textAnchor="middle" fill="#38bdf8" fontSize="4.5" fontWeight="bold">
+                Seu Palpite
+              </text>
             </g>
           )}
 
-          {/* pino do alvo (ao enviar) */}
+          {/* pino da resposta correta (após envio) */}
           {answerPin && (
             <g>
-              <circle cx={answerPin.x} cy={answerPin.y} r={5} fill="var(--color-success)" opacity={0.4} className="animate-pulse" />
-              <circle cx={answerPin.x} cy={answerPin.y} r={3} fill="var(--color-success)" stroke="white" strokeWidth={0.8} />
+              <circle cx={answerPin.x} cy={answerPin.y} r={8} fill="#10b981" opacity={0.4} className="animate-ping" />
+              <circle cx={answerPin.x} cy={answerPin.y} r={4} fill="#059669" stroke="#ffffff" strokeWidth={1} />
+              <text x={answerPin.x} y={answerPin.y - 7} textAnchor="middle" fill="#34d399" fontSize="5" fontWeight="black">
+                {pub.countryName} 🎯
+              </text>
             </g>
           )}
         </svg>
