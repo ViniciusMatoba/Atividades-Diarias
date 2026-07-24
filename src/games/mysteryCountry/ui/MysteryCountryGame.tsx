@@ -39,7 +39,12 @@ import { usePersistedGameState } from "@/lib/usePersistedGameState";
 
 export function MysteryCountryGame({ dateKey, countries, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const { pub, state, updateGame, resetGame } = usePersistedGameState(dateKey, "mystery-country", initialPublic, initialState);
+  const { pub, state, updateGame, resetGame, userSeedId } = usePersistedGameState<MysteryCountryPublic, MysteryCountryState>(
+    dateKey,
+    "mystery-country",
+    initialPublic,
+    initialState,
+  );
   const [selected, setSelected] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +64,7 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
       state,
       guess: { countryId: selected },
       mode,
+      userSeedId,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);

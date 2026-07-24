@@ -30,11 +30,16 @@ export function getMergedTodayResults(
     mergedMap.set(r.gameId, r);
   }
 
+  const seedId = typeof localStorage !== "undefined" ? localStorage.getItem("geekdaily:v1:user_seed_id") : null;
+
   for (const gameId of GAME_IDS) {
     if (mergedMap.has(gameId)) continue;
 
     try {
-      const saved = localStorage.getItem(`geekdaily:v1:state:${dateKey}:${gameId}`);
+      let saved: string | null = null;
+      if (seedId) saved = localStorage.getItem(`geekdaily:v3:state:${dateKey}:${seedId}:${gameId}`);
+      if (!saved) saved = localStorage.getItem(`geekdaily:v2:state:${dateKey}:${gameId}`);
+      if (!saved) saved = localStorage.getItem(`geekdaily:v1:state:${dateKey}:${gameId}`);
       if (!saved) continue;
 
       const parsed = JSON.parse(saved);

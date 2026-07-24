@@ -23,7 +23,7 @@ interface Props {
 
 export function GeekCharacterGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const { pub, state, updateGame, resetGame } = usePersistedGameState<GeekCharacterPublic, GeekCharacterState>(
+  const { pub, state, updateGame, resetGame, userSeedId } = usePersistedGameState<GeekCharacterPublic, GeekCharacterState>(
     dateKey,
     "geek-character",
     initialPublic,
@@ -52,6 +52,7 @@ export function GeekCharacterGame({ dateKey, initialPublic, initialState, mode }
       state,
       guess: { characterId: selected },
       mode,
+      userSeedId,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);

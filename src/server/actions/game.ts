@@ -21,6 +21,7 @@ const inputSchema = z.object({
   guess: z.unknown(),
   mode: z.enum(["daily", "infinite"]).default("daily"),
   idToken: z.string().min(1).optional(),
+  userSeedId: z.string().optional(),
 });
 
 export interface SubmitResult {
@@ -41,12 +42,13 @@ export async function submitGuess(input: unknown): Promise<SubmitResult> {
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Entrada inválida." };
   }
-  const { gameId, dateKey, mode, idToken } = parsed.data;
+  const { gameId, dateKey, mode, idToken, userSeedId } = parsed.data;
 
   const gameModule = getGameModule(gameId as GameId);
   if (!gameModule) return { ok: false, error: "Jogo indisponível." };
 
-  const challenge = gameModule.generateChallenge(`${dateKey}:${gameId}`);
+  const seed = userSeedId ? `${dateKey}:${userSeedId}:${gameId}` : `${dateKey}:${gameId}`;
+  const challenge = gameModule.generateChallenge(seed);
 
   let state: unknown;
   let guess: unknown;

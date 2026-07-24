@@ -76,7 +76,12 @@ function GuessRow({ row }: { row: PokeGuessRow }) {
 
 export function PokeGuessGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const { pub, state, updateGame, resetGame } = usePersistedGameState(dateKey, "poke-guess", initialPublic, initialState);
+  const { pub, state, updateGame, resetGame, userSeedId } = usePersistedGameState<PokeGuessPublic, PokeGuessState>(
+    dateKey,
+    "poke-guess",
+    initialPublic,
+    initialState,
+  );
   const [selected, setSelected] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +100,7 @@ export function PokeGuessGame({ dateKey, initialPublic, initialState, mode }: Pr
       state,
       guess: { pokemonId: selected },
       mode,
+      userSeedId,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);

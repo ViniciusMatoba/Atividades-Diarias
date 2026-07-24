@@ -24,7 +24,7 @@ interface Props {
 
 export function FlagMasterGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const { pub, state, updateGame, resetGame } = usePersistedGameState<FlagMasterPublic, FlagMasterState>(
+  const { pub, state, updateGame, resetGame, userSeedId } = usePersistedGameState<FlagMasterPublic, FlagMasterState>(
     dateKey,
     "flag-master",
     initialPublic,
@@ -53,6 +53,7 @@ export function FlagMasterGame({ dateKey, initialPublic, initialState, mode }: P
       state,
       guess: { countryId: selected },
       mode,
+      userSeedId,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);

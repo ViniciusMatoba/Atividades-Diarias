@@ -24,7 +24,7 @@ interface Props {
 
 export function PixelGuessGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const { pub, state, updateGame, resetGame } = usePersistedGameState<PixelGuessPublic, PixelGuessState>(
+  const { pub, state, updateGame, resetGame, userSeedId } = usePersistedGameState<PixelGuessPublic, PixelGuessState>(
     dateKey,
     "pixel-guess",
     initialPublic,
@@ -53,6 +53,7 @@ export function PixelGuessGame({ dateKey, initialPublic, initialState, mode }: P
       state,
       guess: { characterId: selected },
       mode,
+      userSeedId,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);

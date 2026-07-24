@@ -23,7 +23,7 @@ interface Props {
 
 export function EmojiMovieGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const { pub, state, updateGame, resetGame } = usePersistedGameState<EmojiMoviePublic, EmojiMovieState>(
+  const { pub, state, updateGame, resetGame, userSeedId } = usePersistedGameState<EmojiMoviePublic, EmojiMovieState>(
     dateKey,
     "emoji-movie",
     initialPublic,
@@ -52,6 +52,7 @@ export function EmojiMovieGame({ dateKey, initialPublic, initialState, mode }: P
       state,
       guess: { titleId: selected },
       mode,
+      userSeedId,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);

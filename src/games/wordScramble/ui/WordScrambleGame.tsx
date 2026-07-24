@@ -23,7 +23,7 @@ interface Props {
 
 export function WordScrambleGame({ dateKey, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
-  const { pub, state, updateGame, resetGame } = usePersistedGameState<WordScramblePublic, WordScrambleState>(
+  const { pub, state, updateGame, resetGame, userSeedId } = usePersistedGameState<WordScramblePublic, WordScrambleState>(
     dateKey,
     "word-scramble",
     initialPublic,
@@ -52,6 +52,7 @@ export function WordScrambleGame({ dateKey, initialPublic, initialState, mode }:
       state,
       guess: { word: selected },
       mode,
+      userSeedId,
       ...(idToken ? { idToken } : {}),
     });
     setBusy(false);
