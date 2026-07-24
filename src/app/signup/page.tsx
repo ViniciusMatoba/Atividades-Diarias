@@ -26,7 +26,16 @@ export default function SignupPage() {
       confirmPassword: form.get("confirmPassword"),
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Dados inválidos.");
+      const firstIssue = parsed.error.issues[0];
+      const field = firstIssue?.path[0];
+      const fieldNames: Record<string, string> = {
+        username: "Nome de usuário",
+        email: "E-mail",
+        password: "Senha",
+        confirmPassword: "Confirmar Senha",
+      };
+      const prefix = field && fieldNames[String(field)] ? `${fieldNames[String(field)]}: ` : "";
+      setError(`${prefix}${firstIssue?.message ?? "Dados inválidos."}`);
       return;
     }
     setError(null);

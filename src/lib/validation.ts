@@ -6,9 +6,9 @@ export const signupSchema = z
   .object({
     username: z
       .string()
-      .min(3, "Nome de usuário precisa de ao menos 3 caracteres.")
-      .max(20, "Nome de usuário muito longo.")
-      .regex(/^[a-zA-Z0-9_]+$/, "Use apenas letras, números e _."),
+      .trim()
+      .min(2, "Nome de usuário precisa ter no mínimo 2 caracteres.")
+      .max(30, "Nome de usuário muito longo."),
     email: z.string().email("Endereço de e-mail inválido."),
     password: z.string().min(6, "A senha precisa ter no mínimo 6 caracteres."),
     confirmPassword: z.string().min(1, "Confirme a sua senha."),
