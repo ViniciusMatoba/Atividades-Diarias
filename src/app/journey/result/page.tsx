@@ -1,16 +1,26 @@
+"use client";
+
 import Link from "next/link";
 import { GAME_CATALOG } from "@/games/core/registry";
-import { MOCK_JOURNEY } from "@/lib/mock";
-import { summarizeJourney } from "@/lib/journey";
-import { scoreToStars } from "@/lib/stars";
+import { scoreToStars, type StarRating as StarValue } from "@/lib/stars";
+import { DAILY_GAME_COUNT, MAX_DAILY_SCORE } from "@/lib/scoring";
+import { journeyCountsForStreak } from "@/lib/streak";
+import { useAuthCtx } from "@/lib/firebase/AuthProvider";
 import { Card } from "@/components/ui/Card";
 import { StarRating } from "@/components/ui/StarRating";
 import { Button } from "@/components/ui/Button";
 import { GameIcon } from "@/components/GameIcon";
+import { LoadingState } from "@/components/ui/States";
 
 export default function DailyResultPage() {
-  const summary = summarizeJourney(MOCK_JOURNEY);
-  const overallStars = scoreToStars(Math.round(summary.dayScore / summary.total));
+  const { todayResults, loading } = useAuthCtx();
+  if (loading) return <LoadingState label="Carregando resultado…" />;
+
+  const resultByGame = new Map(todayResults.map((r) => [r.gameId, r]));
+  const completed = todayResults.length;
+  const dayScore = todayResults.reduce((acc, r) => acc + r.score, 0);
+  const countsForStreak = journeyCountsForStreak(completed);
+  const overallStars: StarValue = scoreToStars(Math.round(dayScore / DAILY_GAME_COUNT));
 
   return (
     <div className="space-y-4">
@@ -22,20 +32,24 @@ export default function DailyResultPage() {
       <Card className="gd-pop text-center">
         <p className="text-sm gd-muted">Total</p>
         <p className="text-4xl font-extrabold gd-text">
-          {summary.dayScore}
-          <span className="text-lg font-medium gd-muted"> / {summary.maxScore}</span>
+          {dayScore}
+          <span className="text-lg font-medium gd-muted"> / {MAX_DAILY_SCORE}</span>
         </p>
         <div className="mt-2 flex justify-center">
           <StarRating value={overallStars} size={26} />
         </div>
-        {summary.countsForStreak && (
+        {countsForStreak ? (
           <p className="mt-2 text-sm text-[var(--color-success)]">Streak mantido! 🔥</p>
+        ) : (
+          <p className="mt-2 text-xs gd-muted">
+            Conclua ao menos 3 jogos para manter o streak ({completed}/{DAILY_GAME_COUNT}).
+          </p>
         )}
       </Card>
 
       <ul className="space-y-2">
         {GAME_CATALOG.map((meta) => {
-          const data = MOCK_JOURNEY.find((j) => j.gameId === meta.id)!;
+          const r = resultByGame.get(meta.id);
           return (
             <li
               key={meta.id}
@@ -43,10 +57,10 @@ export default function DailyResultPage() {
             >
               <GameIcon name={meta.icon} size={18} className="gd-muted" />
               <span className="flex-1 truncate text-sm gd-text">{meta.name}</span>
-              {data.status === "completed" ? (
+              {r ? (
                 <>
-                  <span className="text-sm gd-muted">{data.score} pts</span>
-                  <StarRating value={data.stars} size={14} />
+                  <span className="text-sm gd-muted">{r.score} pts</span>
+                  <StarRating value={r.stars} size={14} />
                 </>
               ) : (
                 <span className="text-xs gd-muted">pendente</span>
