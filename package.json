@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed": "tsx scripts/seedFirestore.ts"
+    "seed": "node --env-file=.env.local --import tsx scripts/seedFirestore.ts"
   },
   "dependencies": {
     "firebase": "^11.1.0",

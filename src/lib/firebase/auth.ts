@@ -32,9 +32,15 @@ export async function signOut(): Promise<void> {
   await fbSignOut(getFirebaseAuth());
 }
 
-/** Token de ID atual — enviado ao servidor para autenticar Server Actions. */
+/**
+ * Token de ID atual — enviado ao servidor para autenticar Server Actions.
+ * Aguarda a reidratação do estado de auth (`authStateReady`) antes de ler o
+ * usuário, para não retornar null logo após um carregamento de página.
+ */
 export async function getIdToken(): Promise<string | null> {
-  const user = getFirebaseAuth().currentUser;
+  const auth = getFirebaseAuth();
+  await auth.authStateReady();
+  const user = auth.currentUser;
   return user ? user.getIdToken() : null;
 }
 
