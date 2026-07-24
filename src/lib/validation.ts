@@ -2,15 +2,21 @@ import { z } from "zod";
 
 /** Schemas Zod de entradas externas. Validados no servidor antes de qualquer efeito. */
 
-export const signupSchema = z.object({
-  username: z
-    .string()
-    .min(3, "Nome de usuário precisa de ao menos 3 caracteres.")
-    .max(20, "Nome de usuário muito longo.")
-    .regex(/^[a-zA-Z0-9_]+$/, "Use apenas letras, números e _."),
-  email: z.string().email("Endereço de e-mail inválido."),
-  password: z.string().min(6, "A senha precisa ter no mínimo 6 caracteres."),
-});
+export const signupSchema = z
+  .object({
+    username: z
+      .string()
+      .min(3, "Nome de usuário precisa de ao menos 3 caracteres.")
+      .max(20, "Nome de usuário muito longo.")
+      .regex(/^[a-zA-Z0-9_]+$/, "Use apenas letras, números e _."),
+    email: z.string().email("Endereço de e-mail inválido."),
+    password: z.string().min(6, "A senha precisa ter no mínimo 6 caracteres."),
+    confirmPassword: z.string().min(1, "Confirme a sua senha."),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "As senhas digitadas não coincidem.",
+    path: ["confirmPassword"],
+  });
 export type SignupInput = z.infer<typeof signupSchema>;
 
 export const loginSchema = z.object({

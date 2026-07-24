@@ -23,6 +23,7 @@ export default function SignupPage() {
       username: form.get("username"),
       email: form.get("email"),
       password: form.get("password"),
+      confirmPassword: form.get("confirmPassword"),
     });
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Dados inválidos.");
@@ -67,6 +68,7 @@ export default function SignupPage() {
           <Input label="Senha" name="password" type="password" autoComplete="new-password" required />
           <p className="mt-1 text-xs gd-muted">Mínimo de 6 caracteres (aceita letras, números e caracteres especiais).</p>
         </div>
+        <Input label="Confirmar Senha" name="confirmPassword" type="password" autoComplete="new-password" required />
         {error && (
           <div className="flex items-start gap-2 rounded-xl border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 p-3.5 text-sm text-[var(--color-danger)]">
             <AlertCircle size={18} className="mt-0.5 shrink-0" aria-hidden />
