@@ -18,12 +18,12 @@ export interface WhoCameFirstState {
 }
 
 export interface WhoCameFirstPublic {
-  items: { id: string; label: string }[]; // na ordem apresentada (sem ano!)
+  items: { id: string; label: string; category?: string }[];
   submitted: boolean;
   solved: boolean;
   /** Revelado só após enviar: ordem correta com anos + a ordem do jogador. */
   reveal: {
-    correct: { id: string; label: string; year: number }[];
+    correct: { id: string; label: string; year: number; creator?: string; curiosity?: string }[];
     playerOrder: string[];
   } | null;
 }
@@ -151,12 +151,22 @@ export const whoCameFirst: GameModule<
     const items = challenge.presented.map((id) => ({
       id,
       label: getItem(id)?.label ?? id,
+      category: getItem(id)?.category,
     }));
     const reveal = state.submitted
       ? {
           correct: [...challenge.itemIds]
             .sort((a, b) => (getItem(a)?.year ?? 0) - (getItem(b)?.year ?? 0))
-            .map((id) => ({ id, label: getItem(id)?.label ?? id, year: getItem(id)?.year ?? 0 })),
+            .map((id) => {
+              const item = getItem(id);
+              return {
+                id,
+                label: item?.label ?? id,
+                year: item?.year ?? 0,
+                creator: item?.creator,
+                curiosity: item?.curiosity,
+              };
+            }),
           playerOrder: state.order,
         }
       : null;

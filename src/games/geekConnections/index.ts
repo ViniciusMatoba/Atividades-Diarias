@@ -8,7 +8,7 @@ import { GEEK_CONNECTIONS_CONFIG, scoreGeekConnections } from "./scoring";
 
 export interface GeekConnectionsChallenge {
   /** 4 grupos do dia (com ids OPACOS de termo — nunca revelam o agrupamento). */
-  groups: { theme: string; termIds: string[] }[];
+  groups: { theme: string; explanation?: string; termIds: string[] }[];
   termLabels: Record<string, string>;
   presented: string[]; // 16 ids embaralhados
 }
@@ -27,6 +27,7 @@ export interface TermView {
 export interface SolvedGroupView {
   theme: string;
   terms: TermView[];
+  explanation?: string;
 }
 
 export interface GeekConnectionsPublic {
@@ -76,7 +77,7 @@ function termView(challenge: GeekConnectionsChallenge, id: string): TermView {
 
 function groupView(challenge: GeekConnectionsChallenge, gi: number): SolvedGroupView {
   const g = challenge.groups[gi]!;
-  return { theme: g.theme, terms: g.termIds.map((id) => termView(challenge, id)) };
+  return { theme: g.theme, explanation: g.explanation, terms: g.termIds.map((id) => termView(challenge, id)) };
 }
 
 // ---- Módulo ----
@@ -116,7 +117,7 @@ export const geekConnections: GameModule<
     });
 
     return {
-      groups: chosen.map((g, gi) => ({ theme: g.theme, termIds: groupTermIds[gi]! })),
+      groups: chosen.map((g, gi) => ({ theme: g.theme, explanation: g.explanation, termIds: groupTermIds[gi]! })),
       termLabels,
       presented,
     };

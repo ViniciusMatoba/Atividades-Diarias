@@ -41,11 +41,11 @@ export interface PokeGuessRow {
 
 export interface PokeGuessPublic {
   rows: PokeGuessRow[];
-  pokemonList: { id: string; name: string }[];
+  pokemonList: { id: string; name: string; pokedexId: number; generation: number }[];
   guessesRemaining: number;
   finished: boolean;
   solved: boolean;
-  answer: { id: string; name: string } | null;
+  answer: Pokemon | null;
 }
 
 export interface PokeGuessGuess {
@@ -156,11 +156,11 @@ export const pokeGuess: GameModule<PokeGuessChallenge, PokeGuessPublic, PokeGues
       .map((p) => buildRow(answer, p));
     return {
       rows,
-      pokemonList: POKEMON.map((p) => ({ id: p.id, name: p.name })),
+      pokemonList: POKEMON.map((p) => ({ id: p.id, name: p.name, pokedexId: p.pokedexId, generation: p.generation })),
       guessesRemaining: Math.max(0, POKE_GUESS_CONFIG.maxGuesses - state.guesses.length),
       finished: state.finished,
       solved: state.solved,
-      answer: state.finished ? { id: answer.id, name: answer.name } : null,
+      answer: state.finished ? answer : null,
     };
   },
 

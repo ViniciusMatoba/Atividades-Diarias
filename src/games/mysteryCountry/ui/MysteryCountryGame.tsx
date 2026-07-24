@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Globe2, Check, X, RotateCcw } from "lucide-react";
+import { Globe2, Check, X, RotateCcw, Compass, Users, MessageSquare, MapPin, Map, Sparkles, BookOpen } from "lucide-react";
 import { submitGuess } from "@/server/actions/game";
 import type { MysteryCountryState, MysteryCountryPublic } from "@/games/mysteryCountry";
+import { getFlagUrl } from "@/games/mysteryCountry/data/countries";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { StarRating } from "@/components/ui/StarRating";
@@ -24,6 +25,14 @@ interface Props {
   initialState: MysteryCountryState;
   mode: "daily" | "infinite";
 }
+
+const CLUE_ICONS: Record<string, React.ReactNode> = {
+  continent: <Compass size={18} className="text-emerald-400" />,
+  population: <Users size={18} className="text-sky-400" />,
+  languages: <MessageSquare size={18} className="text-indigo-400" />,
+  neighbors: <Map size={18} className="text-amber-400" />,
+  capital: <MapPin size={18} className="text-rose-400" />,
+};
 
 export function MysteryCountryGame({ dateKey, countries, initialPublic, initialState, mode }: Props) {
   const { refresh } = useAuthCtx();
@@ -61,7 +70,6 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
     setSelected("");
     const lastGuess = pubData.guesses.at(-1);
     setLastMessage(lastGuess?.correct ? "Acertou! 🎉" : "Não é esse. Nova pista liberada!");
-    // Se gravou resultado oficial, atualiza o dashboard (home/perfil).
     if (res.recordedOfficial) void refresh();
   }
 
@@ -73,36 +81,48 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
     setLastMessage(null);
   }
 
-  const finalScore = pub.finished && pub.solved ? scoreToStars(scoreForState()) : null;
   function scoreForState(): number {
-    // pontuação exibida vem do último retorno do servidor via re-render;
-    // recomputada de forma segura só para exibir estrelas ao vencer.
     const extraClues = Math.max(0, pub.revealedClues - 1);
     const wrong = pub.guesses.filter((g) => !g.correct).length;
     return Math.max(0, 1000 - extraClues * 80 - wrong * 60);
   }
 
+  const numericScore = scoreForState();
+  const finalStars = pub.finished && pub.solved ? scoreToStars(numericScore) : null;
+
   return (
     <div className="space-y-4">
-      <header className="flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--color-geo)] text-black/80">
-          <Globe2 aria-hidden />
+      <header className="flex items-center justify-between rounded-2xl gd-glass p-3.5">
+        <div className="flex items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-[var(--color-geo)] text-black/90 shadow-md">
+            <Globe2 size={22} aria-hidden />
+          </div>
+          <div>
+            <h1 className="text-xl font-extrabold tracking-tight gd-text">País Misterioso</h1>
+            <p className="text-xs gd-muted">Pistas geográficas progressivas</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-bold gd-text">País Misterioso</h1>
-          <p className="text-xs gd-muted">
-            {pub.guessesRemaining} tentativa(s) · {pub.revealedClues}/{pub.totalClues} pistas
-          </p>
+        <div className="rounded-xl border gd-border gd-surface-2 px-3 py-1.5 text-center">
+          <span className="block text-[10px] uppercase font-bold gd-muted">Pistas</span>
+          <span className="text-sm font-extrabold text-[var(--color-geo)]">
+            {pub.revealedClues}/{pub.totalClues}
+          </span>
         </div>
       </header>
 
       {/* Pistas */}
-      <section className="space-y-2" aria-label="Pistas">
+      <section className="space-y-2.5" aria-label="Pistas Reveladas">
         {pub.clues.map((clue) => (
-          <Card key={clue.kind} className="gd-pop flex items-center justify-between py-3">
-            <span className="text-sm gd-muted">{clue.label}</span>
-            <span className="text-sm font-semibold gd-text">{clue.value}</span>
-          </Card>
+          <div
+            key={clue.kind}
+            className="gd-pop flex items-center justify-between rounded-xl border gd-border gd-surface p-3.5 shadow-sm"
+          >
+            <div className="flex items-center gap-2.5">
+              {CLUE_ICONS[clue.kind] ?? <Sparkles size={18} />}
+              <span className="text-xs font-bold uppercase tracking-wider gd-muted">{clue.label}</span>
+            </div>
+            <span className="text-sm font-extrabold gd-text">{clue.value}</span>
+          </div>
         ))}
       </section>
 
@@ -112,13 +132,13 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
           {pub.guesses.map((g) => (
             <li
               key={g.id}
-              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+              className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-all ${
                 g.correct
-                  ? "border-[var(--color-success)] text-[var(--color-success)]"
-                  : "gd-border gd-muted"
+                  ? "border-[var(--color-success)] bg-[var(--color-success)]/10 text-[var(--color-success)]"
+                  : "gd-border gd-surface-2 gd-muted"
               }`}
             >
-              {g.correct ? <Check size={15} aria-hidden /> : <X size={15} aria-hidden />}
+              {g.correct ? <Check size={16} aria-hidden /> : <X size={16} aria-hidden />}
               {g.name}
             </li>
           ))}
@@ -126,60 +146,95 @@ export function MysteryCountryGame({ dateKey, countries, initialPublic, initialS
       )}
 
       {lastMessage && !pub.finished && (
-        <p className="text-center text-sm text-[var(--color-warning)]" role="status">
+        <p className="text-center text-sm font-semibold text-[var(--color-warning)]" role="status">
           {lastMessage}
         </p>
       )}
       {error && (
-        <p className="text-center text-sm text-[var(--color-danger)]" role="alert">
+        <p className="text-center text-sm font-semibold text-[var(--color-danger)]" role="alert">
           {error}
         </p>
       )}
 
       {/* Área de ação */}
       {!pub.finished ? (
-        <div className="space-y-2">
-          <label htmlFor="country-select" className="block text-sm font-medium gd-text">
-            Seu palpite
+        <div className="space-y-3 rounded-2xl border gd-border gd-surface p-4">
+          <label htmlFor="country-select" className="block text-sm font-bold gd-text">
+            Seu palpite de país:
           </label>
           <select
             id="country-select"
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="h-11 w-full rounded-xl border gd-border gd-surface-2 px-3 text-sm gd-text outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]"
+            className="h-12 w-full rounded-xl border gd-border gd-surface-2 px-3.5 text-sm font-semibold gd-text outline-none transition-all focus-visible:ring-2 focus-visible:ring-[var(--color-geo)]"
           >
-            <option value="">Escolha um país…</option>
+            <option value="">Escolha um país ({options.length} disponíveis)…</option>
             {options.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
           </select>
-          <Button onClick={onGuess} disabled={!selected || busy} size="lg" className="w-full">
-            {busy ? "Enviando…" : "Palpitar"}
+          <Button onClick={onGuess} disabled={!selected || busy} size="lg" className="w-full font-bold shadow-md">
+            {busy ? "Validando palpite…" : "Confirmar Palpite"}
           </Button>
         </div>
       ) : (
-        <Card className="gd-pop space-y-3 text-center">
-          <p className="text-lg font-bold gd-text">
-            {pub.solved ? "Você acertou!" : "Não foi dessa vez"}
-          </p>
+        <Card className="gd-bounce-in space-y-4 border-2 border-[var(--color-geo)]/50 p-5 text-center shadow-xl">
+          <div className="flex flex-col items-center gap-2">
+            <span className="rounded-full bg-[var(--color-geo)]/20 px-3 py-1 text-xs font-bold text-[var(--color-geo)]">
+              {pub.solved ? "🌎 Descoberta Concluída!" : "🗺️ Fim de Jogo"}
+            </span>
+            <h2 className="text-2xl font-extrabold tracking-tight gd-text">
+              {pub.solved ? "Você Encontrou o País!" : "Não foi desta vez!"}
+            </h2>
+          </div>
+
           {pub.answer && (
-            <p className="text-sm gd-muted">
-              Resposta: <span className="font-semibold gd-text">{pub.answer.name}</span>
-            </p>
-          )}
-          {pub.solved && (
-            <div className="flex flex-col items-center gap-1">
-              <StarRating value={finalScore} size={26} />
-              <p className="text-sm gd-muted">{scoreForState()} pontos</p>
+            <div className="rounded-2xl border gd-border gd-surface-2 p-4 text-left space-y-3">
+              <div className="flex items-center gap-4">
+                {pub.answer.code && (
+                  <div className="size-20 shrink-0 overflow-hidden rounded-xl border gd-border shadow-md">
+                    <img
+                      src={getFlagUrl(pub.answer.code)}
+                      alt={`Bandeira de ${pub.answer.name}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
+                <div>
+                  <span className="text-xs font-bold text-[var(--color-geo)] uppercase tracking-wider">
+                    Ficha Cultural · {pub.answer.continent}
+                  </span>
+                  <h3 className="text-xl font-black gd-text">{pub.answer.name}</h3>
+                  <p className="text-xs font-semibold gd-muted">Capital: {pub.answer.capital}</p>
+                </div>
+              </div>
+
+              {pub.answer.curiosity && (
+                <div className="rounded-xl bg-black/20 p-3 space-y-1">
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase text-[var(--color-geo)]">
+                    <BookOpen size={13} /> Fato Curioso
+                  </span>
+                  <p className="text-xs leading-relaxed gd-text font-medium">{pub.answer.curiosity}</p>
+                </div>
+              )}
             </div>
           )}
-          <Button variant="secondary" onClick={reset} className="w-full">
-            <RotateCcw size={16} aria-hidden /> Jogar de novo (não conta oficial)
+
+          {pub.solved && (
+            <div className="flex flex-col items-center gap-1.5 pt-2">
+              <StarRating value={finalStars} size={28} />
+              <p className="text-sm font-extrabold gd-text">{numericScore} pontos obtidos</p>
+            </div>
+          )}
+
+          <Button variant="secondary" onClick={reset} className="w-full font-bold">
+            <RotateCcw size={18} aria-hidden /> Jogar de novo (modo treino)
           </Button>
         </Card>
       )}
     </div>
   );
 }
+

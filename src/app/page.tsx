@@ -12,6 +12,9 @@ import { JourneyCard } from "@/components/JourneyCard";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { LoadingState } from "@/components/ui/States";
+import { HomeDiscoveriesPreview } from "@/features/dailyDiscoveries/ui/HomeDiscoveriesPreview";
+import { getDailyDiscoveries } from "@/features/dailyDiscoveries/services/dailySelection";
+import { getUserDiscoveryStates } from "@/features/dailyDiscoveries/services/userDiscoveries";
 
 function greeting(): string {
   const hour = Number(
@@ -113,6 +116,12 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Seção Descobertas de hoje */}
+      <HomeDiscoveriesPreview
+        discoveries={getDailyDiscoveries(dateKey)}
+        userStates={getUserDiscoveryStates(dateKey)}
+      />
 
       <Link
         href="/infinite"

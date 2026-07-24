@@ -65,8 +65,9 @@ describe("whoCameFirst.toPublic", () => {
     const pub = whoCameFirst.toPublic(c, whoCameFirst.initialState(c));
     expect(pub.reveal).toBeNull();
     expect(pub.items).toHaveLength(5);
-    // cada item exposto tem apenas id e label
-    pub.items.forEach((it) => expect(Object.keys(it).sort()).toEqual(["id", "label"]));
+    pub.items.forEach((it) => {
+      expect(it).not.toHaveProperty("year");
+    });
   });
 
   it("revela a ordem correta após enviar", () => {

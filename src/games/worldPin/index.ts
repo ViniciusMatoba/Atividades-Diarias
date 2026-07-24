@@ -23,7 +23,7 @@ export interface WorldPinPublic {
   submitted: boolean;
   result: {
     guess: { lat: number; lon: number };
-    answer: { name: string; lat: number; lon: number };
+    answer: { name: string; lat: number; lon: number; code?: string; curiosity?: string };
     distanceKm: number;
     score: number;
     bullseye: boolean;
@@ -112,7 +112,7 @@ export const worldPin: GameModule<WorldPinChallenge, WorldPinPublic, WorldPinSta
       state.submitted && state.lat !== null && state.lon !== null && state.distanceKm !== null
         ? {
             guess: { lat: state.lat, lon: state.lon },
-            answer: { name: answer.name, lat: answer.lat, lon: answer.lon },
+            answer: { name: answer.name, lat: answer.lat, lon: answer.lon, code: answer.code, curiosity: answer.curiosity },
             distanceKm: state.distanceKm,
             score: scoreWorldPin(state.distanceKm),
             bullseye: state.solved,

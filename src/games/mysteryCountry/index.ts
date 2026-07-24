@@ -34,7 +34,7 @@ export interface MysteryCountryPublic {
   finished: boolean;
   solved: boolean;
   /** Revelado somente ao terminar. */
-  answer: { id: string; name: string } | null;
+  answer: Country | null;
 }
 
 export interface MysteryCountryGuess {
@@ -199,7 +199,7 @@ export const mysteryCountry: GameModule<
       guessesRemaining: Math.max(0, MYSTERY_COUNTRY_SCORING.maxGuesses - state.guesses.length),
       finished: state.finished,
       solved: state.solved,
-      answer: state.finished ? { id: answer.id, name: answer.name } : null,
+      answer: state.finished ? answer : null,
     };
   },
 
