@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Flame, Trophy, Infinity as InfinityIcon, ArrowRight, LogIn } from "lucide-react";
 import { GAME_CATALOG, isPlayable } from "@/games/core/registry";
@@ -29,20 +27,22 @@ function greeting(): string {
   return "Boa noite";
 }
 
+import { useState } from "react";
+import { LoginView } from "@/components/LoginView";
+
 export default function HomePage() {
-  const router = useRouter();
   const { user, profile, todayResults, loading } = useAuthCtx();
+  const [isGuest, setIsGuest] = useState(() => {
+    return typeof window !== "undefined" && sessionStorage.getItem("guest_mode") === "true";
+  });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      const isGuest = typeof window !== "undefined" && sessionStorage.getItem("guest_mode") === "true";
-      if (!isGuest) {
-        router.replace("/login");
-      }
-    }
-  }, [loading, user, router]);
+  if (loading) return <LoadingState label="Carregando…" />;
 
-  if (loading) return <LoadingState label="Carregando seu dia…" />;
+  // Se não estiver conectado a uma conta e não tiver ativado o modo visitante,
+  // a tela inicial É a tela de login.
+  if (!user && !isGuest) {
+    return <LoginView onGuestMode={() => setIsGuest(true)} />;
+  }
 
   const dateKey = getDailyKey();
   const dateLabel = new Intl.DateTimeFormat("pt-BR", {
