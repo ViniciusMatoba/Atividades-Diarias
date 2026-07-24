@@ -3,6 +3,7 @@ import { mysteryCountry } from "../mysteryCountry";
 import { whoCameFirst } from "../whoCameFirst";
 import { geekConnections } from "../geekConnections";
 import { pokeGuess } from "../pokeGuess";
+import { worldPin } from "../worldPin";
 
 /**
  * Registry central de módulos de jogo.
@@ -17,19 +18,13 @@ const modules: Partial<Record<GameId, AnyGameModule>> = {
   "who-came-first": whoCameFirst,
   "geek-connections": geekConnections,
   "poke-guess": pokeGuess,
+  "world-pin": worldPin,
 };
 
-/** Metadados de todos os 5 jogos do MVP (mesmo os ainda não jogáveis). */
+/** Metadados dos 5 jogos do MVP (todos jogáveis). */
 export const GAME_CATALOG: readonly GameMeta[] = [
   mysteryCountry.meta,
-  {
-    id: "world-pin",
-    name: "Pin do Mundo",
-    description: "Aponte no mapa onde fica o país.",
-    icon: "MapPin",
-    theme: "geo",
-    order: 2,
-  },
+  worldPin.meta,
   pokeGuess.meta,
   geekConnections.meta,
   whoCameFirst.meta,

@@ -78,12 +78,14 @@ npx firebase deploy --only firestore:rules,firestore:indexes   # regras/índices
 
 - **Firebase ao vivo:** cadastro/login (Firebase Auth), perfil no Firestore,
   pontuação oficial idempotente, ranking agregado, streak e XP — validado E2E.
-- **2 jogos jogáveis:** País Misterioso (pistas progressivas) e Quem Veio
-  Primeiro? (ordenação cronológica), ambos via a Server Action genérica.
+- **Os 5 jogos jogáveis** (via a Server Action genérica):
+  País Misterioso (pistas), Pin do Mundo (mapa/distância), PokéGuess
+  (atributos), Geek Connections (agrupar 16 termos), Quem Veio Primeiro?
+  (ordem cronológica).
 - Home, Jornada e Perfil lêem **dados reais** do usuário logado.
 - Telas ainda em mock: Ranking e Resultado do dia.
-- 67 testes: pontuação, estrelas, XP, streak, chave diária/semana (fuso), seed,
-  conquistas e regras dos jogos.
+- 99 testes: pontuação, estrelas, XP, streak, chave diária/semana (fuso), seed,
+  conquistas, haversine e regras dos 5 jogos.
 
 ## Adicionar um novo jogo
 

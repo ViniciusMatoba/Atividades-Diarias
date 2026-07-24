@@ -8,11 +8,13 @@ import { COUNTRIES } from "@/games/mysteryCountry/data/countries";
 import { whoCameFirst } from "@/games/whoCameFirst";
 import { geekConnections } from "@/games/geekConnections";
 import { pokeGuess } from "@/games/pokeGuess";
+import { worldPin } from "@/games/worldPin";
 import { getDailyKey } from "@/lib/dailyKey";
 import { MysteryCountryGame } from "@/games/mysteryCountry/ui/MysteryCountryGame";
 import { WhoCameFirstGame } from "@/games/whoCameFirst/ui/WhoCameFirstGame";
 import { GeekConnectionsGame } from "@/games/geekConnections/ui/GeekConnectionsGame";
 import { PokeGuessGame } from "@/games/pokeGuess/ui/PokeGuessGame";
+import { WorldPinGame } from "@/games/worldPin/ui/WorldPinGame";
 
 const KNOWN_IDS: GameId[] = [
   "mystery-country",
@@ -51,6 +53,8 @@ export default async function PlayPage({
         <GeekConnectionsReference mode={mode} />
       ) : id === "poke-guess" ? (
         <PokeGuessReference mode={mode} />
+      ) : id === "world-pin" ? (
+        <WorldPinReference mode={mode} />
       ) : (
         <ComingSoon name={meta.name} playable={isPlayable(id)} />
       )}
@@ -107,6 +111,15 @@ function PokeGuessReference({ mode }: { mode: "daily" | "infinite" }) {
   const initialPublic = pokeGuess.toPublic(challenge, state);
 
   return <PokeGuessGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
+}
+
+function WorldPinReference({ mode }: { mode: "daily" | "infinite" }) {
+  const dateKey = getDailyKey();
+  const challenge = worldPin.generateChallenge(`${dateKey}:world-pin`);
+  const state = worldPin.initialState(challenge);
+  const initialPublic = worldPin.toPublic(challenge, state);
+
+  return <WorldPinGame dateKey={dateKey} initialPublic={initialPublic} initialState={state} mode={mode} />;
 }
 
 function ComingSoon({ name, playable }: { name: string; playable: boolean }) {
